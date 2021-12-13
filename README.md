@@ -1,5 +1,5 @@
-__GITHUB__
-for gworking with github check __github_commands.txt__
+
+For working with __GITHUB__ check __github_commands.txt__
 
 # LITS_segmentation
 
