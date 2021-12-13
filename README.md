@@ -4,7 +4,16 @@ For working with __GITHUB__ check __github_commands.txt__
 # LITS_segmentation
 
 __1.Create an env__  
-conda create --name <env> --file lits_requirements.txt
+Create a Conda env 
+*Python==3.8.2
+GPU
+conda install -c anaconda cudatoolkit
+conda install -c anaconda cudnn
+*Pytorch==1.9.0 (https://pytorch.org/get-started/previous-versions/)
+conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=11.3 -c pytorch -c conda-forge
+    
+conda install --file lits_requirements.txt
+pip install -r pip_req.txt
     
 
 __2.Organize the data__  
