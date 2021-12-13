@@ -4,8 +4,8 @@ checkpoint:
   save_top_k: 3
   verbose: true
 data:
-  image: D:\Yuliia_data\Yuliia_data\lits\img
-  label: D:\Yuliia_data\Yuliia_data\lits\seg
+  image: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\img
+  label: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\seg
   root_dir: D:\Yuliia_data\Yuliia_data\lits\
   num_class: 3
 
