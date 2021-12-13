@@ -1,10 +1,10 @@
 # LITS_segmentation
 
-##1.Create an env 
+__1.Create an env__  
 conda create --name <env> --file lits_requirements.txt
     
 
-##2.Organize the data
+__2.Organize the data__  
 ├── LITS_img/       # CT volumes/     
 │   ├── train/  
 │   │   ├──001.nii.gz    
@@ -21,7 +21,7 @@ conda create --name <env> --file lits_requirements.txt
 │   └── excluded/  	#91, 89, 87, 41, 47, 38, 34, 32 
 
 
-##3. Create a .yaml file
+__3. Create a .yaml file__  
 (e.g yaml_files/lits_gab_unet.yaml)
     -specify where the data is
     -where to save checkpoints and tensorboard logs
@@ -31,7 +31,7 @@ conda create --name <env> --file lits_requirements.txt
     -Transformations and patch size
     
   
-##4. Run *main_augm_stable.py*
+__4. Run *main_augm_stable.py*__
 ```
     4.1 For training
     $ python main_augm_stable.py -c yaml_files\lits_gab_unet.yaml --train
