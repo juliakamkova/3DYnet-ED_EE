@@ -1,3 +1,6 @@
+__GITHUB__
+for gworking with github check __github_commands.txt__
+
 # LITS_segmentation
 
 __1.Create an env__  
