@@ -23,8 +23,8 @@ class Framework(pl.LightningModule):
         self.net = net
         self.params = params
         self.n_cl = n_cl
-        self.post_pred = Compose([EnsureType(), AsDiscrete(argmax=True, to_onehot=3)])
-        self.post_label = Compose([EnsureType(), AsDiscrete(to_onehot=3)])
+        self.post_pred = Compose([EnsureType(), AsDiscrete(argmax=True, to_onehot=n_cl)])
+        self.post_label = Compose([EnsureType(), AsDiscrete(to_onehot=n_cl)])
         self.dice_metric = DiceMetric(include_background=False, reduction="mean", get_not_nans=False)
         self.best_val_dice = 0
         self.best_val_epoch = 0
@@ -177,7 +177,8 @@ class Framework(pl.LightningModule):
         input = batch['image']
         masks = batch['label']
 
-        roi_size = (96, 96, 96) #!TODO
+        print(self.params.data.patch)
+        roi_size = list(self.params.data.patch) #!TODO
         sw_batch_size = 1
         outputs = sliding_window_inference(input, roi_size, sw_batch_size, self.forward)
         val_loss = self.loss_function(outputs, masks)
@@ -200,7 +201,7 @@ class Framework(pl.LightningModule):
         monai_dice = self.dice_metric(y_pred=outputs2,y=labels2)
         # hausdoff =
         # own_metric = (monai_dice+hausdoff)/2
-        # print('from validation step checking Dice', monai_dice, batch_idx)
+        print('from validation step checking Dice', monai_dice, batch_idx)
         self.log('val step Dice', monai_dice)
 
 

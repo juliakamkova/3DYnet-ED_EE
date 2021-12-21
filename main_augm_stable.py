@@ -23,7 +23,7 @@ import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 import patch_set_up
-import set_inf
+import inferen_patch
 from box import Box
 
 
@@ -124,12 +124,12 @@ elif args.test:
     net.eval()
     trainer.test(net)
 elif args.inference:
-    #net.eval()
+    net.eval()
     print('trying to make an infarance', args.indir )
     if args.indir:
-        set_inf.inference_save (net, str(args.indir), args.outdir, None, params)
+        inferen_patch.inference_save (net, str(args.indir), args.outdir, None, params)
     else:
-        set_inf.inference_save (net, None, args.outdir, str(args.volumes[1]), params)
+        inferen_patch.inference_save (net, None, args.outdir, str(args.volumes[1]), params)
 else:
     print('you did not select the mode')
     raise NotImplementedError
