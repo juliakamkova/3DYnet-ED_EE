@@ -33,14 +33,14 @@ __2.Organize the data__
 │   └── excluded/  	#91, 89, 87, 41, 47, 38, 34, 32 
 
 
-__3. Create a .yaml file__  
-(e.g yaml_files/lits_gab_unet.yaml)
-    -specify where the data is
-    -where to save checkpoints and tensorboard logs
-    -specify the network
-    -specify the loss function
-    -specify the optimizer and lr
-    -Transformations and patch size
+__3. Create a .yaml file__    
+(e.g yaml_files/lits_gab_unet.yaml)  
+    -specify where the data in  
+    -where to save checkpoints and tensorboard logs  
+    -specify the network  
+    -specify the loss function  
+    -specify the optimizer and lr  
+    -Transformations and patch size  
     
   
 __4. Run *main_augm_stable.py*__
@@ -51,6 +51,10 @@ __4. Run *main_augm_stable.py*__
     4.2 To restore training
     $ python main_augm_stable.py -c yaml_files\lits_gab_unet.yaml --restore -w checpoint_name.ckpt
     
-    [] TODO 4.3 Inference
+    4.3 Inference
+    $ python main_augm_stable.py -c yaml_files\lits_gab_unet.yaml --infer -w checpoint_name.ckpt -in_dir path_to_folder
+    $ python main_augm_stable.py -c yaml_files\lits_gab_unet.yaml --infer -w checpoint_name.ckpt volumes path_to_volume.nii
+    
+    could also specify where to save with --save_dir
 ```
 
