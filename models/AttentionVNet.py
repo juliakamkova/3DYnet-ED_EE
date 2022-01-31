@@ -97,13 +97,13 @@ class Up(nn.Module) :
         return cat + self.conv(cat)
 
 
-class AttentionVNet(nn.Module) :
+class AttVNet(nn.Module) :
     """
     Main model
     """
 
     def __init__(self, in_channels=1, num_class=3) :
-        super(VNet, self).__init__()
+        super(AttVNet, self).__init__()
 
         self.down1 = nn.Sequential(
             nn.Conv3d(in_channels, 16, kernel_size=5, padding=2),
@@ -145,62 +145,62 @@ class AttentionVNet(nn.Module) :
         return self.up5(up4)
 
 
-data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
-label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
-net = AttentionVNet()
-# net.eval()
-net = net.to(device)
-net.apply(init)
-# net.eval()
-
-res = net(data)
-for item in res :
-    print(item.size())
-
-# Calculate network parameters
-num_parameter = .0
-for item in net.modules() :
-
-    if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d) :
-        num_parameter += (item.weight.size(0) * item.weight.size(1) *
-                          item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
-
-        if item.bias is not None :
-            num_parameter += item.bias.size(0)
-
-    elif isinstance(item, nn.PReLU) :
-        num_parameter += item.num_parameters
-
-print(num_parameter)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
-iters = 0
-# training simulation
-
-for epoch in range(10) :  # loop over the dataset multiple times
-    inputs = data
-    masks = label
-    for i in range(len(inputs)) :
-        running_loss = 0.0
-        # get the inputs; data is a list of [inputs, labels]
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = net(inputs)
-        # print(masks)
-        loss = criterion(outputs, masks[i])
-        # print('mask i', masks[i])
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        running_loss += loss.item()
-        iters += 1
-
-        if iters % 2 == 0 :
-            print('Prev Loss: {:.4f} '.format(
-                loss.item()))
-            epoch_loss = running_loss / (len(inputs))
+# data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
+# label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
+# net = AttentionVNet()
+# # net.eval()
+# net = net.to(device)
+# net.apply(init)
+# # net.eval()
+#
+# res = net(data)
+# for item in res :
+#     print(item.size())
+#
+# # Calculate network parameters
+# num_parameter = .0
+# for item in net.modules() :
+#
+#     if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d) :
+#         num_parameter += (item.weight.size(0) * item.weight.size(1) *
+#                           item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
+#
+#         if item.bias is not None :
+#             num_parameter += item.bias.size(0)
+#
+#     elif isinstance(item, nn.PReLU) :
+#         num_parameter += item.num_parameters
+#
+# print(num_parameter)
+#
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+# iters = 0
+# # training simulation
+#
+# for epoch in range(10) :  # loop over the dataset multiple times
+#     inputs = data
+#     masks = label
+#     for i in range(len(inputs)) :
+#         running_loss = 0.0
+#         # get the inputs; data is a list of [inputs, labels]
+#
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+#
+#         # forward + backward + optimize
+#         outputs = net(inputs)
+#         # print(masks)
+#         loss = criterion(outputs, masks[i])
+#         # print('mask i', masks[i])
+#         loss.backward()
+#         optimizer.step()
+#
+#         # print statistics
+#         running_loss += loss.item()
+#         iters += 1
+#
+#         if iters % 2 == 0 :
+#             print('Prev Loss: {:.4f} '.format(
+#                 loss.item()))
+#             epoch_loss = running_loss / (len(inputs))

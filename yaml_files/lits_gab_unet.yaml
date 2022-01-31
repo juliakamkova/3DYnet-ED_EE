@@ -37,10 +37,10 @@ net:
   #     num_class: 3 
   #     in_channels: 1
 
-  gab_net.SimpleUnet.unet_3D:
+  models.SimpleUnet.UNet3D:
     args: []
     kwargs:
-      n_classes: 3 
+      n_class: 3
       in_channels: 1
 
   # gab_net.AttentionUnet.AttentionUNet:
