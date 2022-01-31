@@ -30,7 +30,7 @@ loss:
       softmax: True
       to_onehot_y: True
 net:
-  gab_net.Vnet.VNet:
+  models.SimpleVNet.VNet:
     args: []
     kwargs:
       num_class: 3 

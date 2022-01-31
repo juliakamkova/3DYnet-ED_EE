@@ -54,10 +54,10 @@ class UnetUp3(nn.Module) :
         return self.conv(torch.cat([outputs1 , outputs2] , 1))
 
 
-class unet_3D(nn.Module) :
+class UNet3D(nn.Module) :
 
-    def __init__(self , feature_scale=4 , n_classes=21 , is_deconv=True , in_channels=1 , is_batchnorm=True) :
-        super(unet_3D , self).__init__()
+    def __init__(self , feature_scale=4 , n_class=21 , is_deconv=True , in_channels=1 , is_batchnorm=True) :
+        super(UNet3D, self).__init__()
         self.is_deconv = is_deconv
         self.in_channels = in_channels
         self.is_batchnorm = is_batchnorm
@@ -88,7 +88,7 @@ class unet_3D(nn.Module) :
         self.up_concat1 = UnetUp3(filters[1] , filters[0] , self.is_deconv , is_batchnorm)
 
         # final conv (without any concat)
-        self.final = nn.Conv3d(filters[0] , n_classes , 1)
+        self.final = nn.Conv3d(filters[0] , n_class , 1)
 
     def forward(self , inputs) :
         conv1 = self.conv1(inputs)
@@ -124,13 +124,13 @@ class unet_3D(nn.Module) :
         return log_p
 
 
-data = torch.randn((1, 1, 96, 96, 96)).cuda()
-label = torch.randint(0, 2, (1, 1, 96, 96, 96)).cuda()
-# print('label', label.shape)
-net = unet_3D()
-net = net.cuda()
-net.apply(init)
-res = net(data)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+# data = torch.randn((1, 1, 96, 96, 96)).cuda()
+# label = torch.randint(0, 2, (1, 1, 96, 96, 96)).cuda()
+# # print('label', label.shape)
+# net = unet_3D()
+# net = net.cuda()
+# net.apply(init)
+# res = net(data)
+#
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
