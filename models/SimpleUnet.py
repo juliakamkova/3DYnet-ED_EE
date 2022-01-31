@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def init(module) :
     if isinstance(module , nn.Conv3d) or isinstance(module , nn.ConvTranspose3d) :
         nn.init.kaiming_normal_(module.weight.data , 0.25)
@@ -90,13 +92,16 @@ class unet_3D(nn.Module) :
 
     def forward(self , inputs) :
         conv1 = self.conv1(inputs)
+        print('conv1', conv1.shape)
         maxpool1 = self.maxpool1(conv1)
 
         conv2 = self.conv2(maxpool1)
         maxpool2 = self.maxpool2(conv2)
+        print('conv2', conv2.shape)
 
         conv3 = self.conv3(maxpool2)
         maxpool3 = self.maxpool3(conv3)
+        print('conv3', conv3.shape)
 
         conv4 = self.conv4(maxpool3)
         maxpool4 = self.maxpool4(conv4)
@@ -108,6 +113,7 @@ class unet_3D(nn.Module) :
         up1 = self.up_concat1(conv1 , up2)
 
         final = self.final(up1)
+        print('final', final.shape)
 
         return final
 
@@ -117,23 +123,14 @@ class unet_3D(nn.Module) :
 
         return log_p
 
+
+data = torch.randn((1, 1, 96, 96, 96)).cuda()
+label = torch.randint(0, 2, (1, 1, 96, 96, 96)).cuda()
+# print('label', label.shape)
 net = unet_3D()
-net.apply(init)
-
-# Output data dimension check
 net = net.cuda()
-data = torch.randn((1 , 1 , 16 , 160 , 160)).cuda()
+net.apply(init)
 res = net(data)
-for item in res :
-    print(item.size())
 
-# Calculate network parameters
-num_parameter = .0
-for item in net.modules() :
-
-    if isinstance(item , nn.Conv3d) or isinstance(item , nn.ConvTranspose3d) :
-        num_parameter += (item.weight.size(0) * item.weight.size(1) *
-                          item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
-
-        if item.bias is not None :
-            num_parameter += item.bias.size(0)
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
