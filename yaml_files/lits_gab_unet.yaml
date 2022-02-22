@@ -4,20 +4,20 @@ checkpoint:
   save_top_k: 3
   verbose: true
 data:
-  image: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\img
-  label: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\seg
+  image: D:\Yuliia_data\Yuliia_data\lits\img
+  label: D:\Yuliia_data\Yuliia_data\lits\seg
   root_dir: D:\Yuliia_data\Yuliia_data\lits\
   num_class: 3
-  patch: [96, 96, 96]
 
 lightning:
-  accumulate_grad_batches: 4
-  fast_dev_run: True
+  accumulate_grad_batches: 1
+  fast_dev_run: False
   gpus: 1
   gradient_clip_val: 0
   log_every_n_steps: 1
-  max_epochs: 200 
+  max_epochs: 1000
   num_sanity_val_steps: 1
+#  overfit_batches: 2
 
 
 log:
@@ -37,13 +37,13 @@ net:
   #     num_class: 3 
   #     in_channels: 1
 
-  gab_net.SimpleUnet.unet_3D:
+  models.SimpleUnet.unet_3D:
     args: []
     kwargs:
       n_classes: 3 
       in_channels: 1
 
-  # gab_net.AttentionUnet.AttentionUNet:
+  # models.AttentionUnet.AttentionUNet:
   #   args: []
   #   kwargs:
   #     num_class: 3 
@@ -125,45 +125,24 @@ train:
         b_max: 1.0
         clip: True
               
-  # - monai.transforms.CropForegroundd:
-  #     args: []
-  #     kwargs:
-  #       keys:
-  #       - image
-  #       - label
-  #       source_key: image
+  - monai.transforms.CropForegroundd:
+     args: []
+     kwargs:
+       keys:
+       - image
+       - label
+       source_key: image
 
-  # - monai.transforms.RandCropByPosNegLabeld:
-  #     args: []
-  #     kwargs:
-  #       keys: ["image", "label"]
-  #       label_key: "label"
-  #       spatial_size: [96, 96, 96]
-  #       pos: 1
-  #       neg: 1
-  #       num_samples: 4
-  #       image_key: "image"
-  #       image_threshold: 0
-  #       allow_smaller: True
-
-  - monai.transforms.RandCropByLabelClassesd:
+  - monai.transforms.ResizeD:
       args: []
       kwargs:
-        keys: ["image", "label"]
-        label_key: "label"
-        spatial_size: [96, 96, 96]
-        ratios: [1,2,3]
-        num_classes: 3
-        num_samples: 4
-        image_key: "image"
-        image_threshold: 0
-        allow_smaller: True
-
-  - monai.transforms.SpatialPadd: #ResizeWithPadOrCrop:
-      args: []
-      kwargs:
-        keys: ["image", "label"]
-        spatial_size: [96, 96, 96]
+        keys:
+        - image
+        - label
+        mode:
+        - trilinear
+        - nearest
+        spatial_size: [256,256,256]
 
   - monai.transforms.RandFlipd:
       args: []
@@ -252,6 +231,17 @@ valid:
         - image
         - label
         source_key: image
+
+  - monai.transforms.ResizeD:
+      args: [ ]
+      kwargs:
+        keys:
+          - image
+          - label
+        mode:
+          - trilinear
+          - nearest
+        spatial_size: [256,256,256]
        
   - monai.transforms.ToTensorD:
       args: []

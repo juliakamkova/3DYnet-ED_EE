@@ -22,8 +22,8 @@ import argparse
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
-import patch_set_up
-import inferen_patch
+import set_up
+import set_inf
 from box import Box
 
 
@@ -65,7 +65,7 @@ params = Box(params)
 
 n_cl = params.data.num_class
 # net = unet_3D()
-net = patch_set_up.Framework(utils.class_loader(params['net'])[0], params, n_cl)
+net = set_up.Framework(utils.class_loader(params['net'])[0], params, n_cl)
 # default used by the Trainer
 #early_stop = EarlyStopping('val_epoch_Loss', patience=10)
 #checkpoint_callback = ModelCheckpoint(**params['checkpoint'], dirpath=str(configdir / 'checkpoints'),
@@ -77,7 +77,7 @@ if args.restore:
     x = torch.load(args.weights)
     weights=x['state_dict'] #loading weights from checkpoints
     checkpoint_callback = ModelCheckpoint(**params['checkpoint'], dirpath=str(configdir / 'checkpoints'),
-                                          filename='{epoch}-{val_epoch_Loss:.3f}')
+                                          filename='{epoch}-{val_loss:.3f}')
     params['log']['configdir'] = Path(args.weights).parent.parent
     configdir = params['log']['configdir'] #to use it for restoring
     net.load_state_dict(weights)
@@ -99,18 +99,18 @@ elif args.train:
     # set up loggers and checkpoints
     tb_logger = pl.loggers.TensorBoardLogger(save_dir= Path(configdir))
     #lr_monitor = LearningRateMonitor(logging_interval='epoch')
-    checkpoint_callback = ModelCheckpoint(**params['checkpoint'], dirpath=str(configdir / 'checkpoints'), filename='{epoch}-{val_epoch_Loss:.3f}')
+    checkpoint_callback = ModelCheckpoint(**params['checkpoint'], dirpath=str(configdir / 'checkpoints'), filename='{epoch}-{val_loss:.3f}')
     net_callbacks = [checkpoint_callback]
-    trainer = pl.Trainer(
-        gpus=[0],
-        max_epochs=200,
-        num_sanity_val_steps=1,
-        logger=tb_logger,
-        callbacks=net_callbacks,
-        log_every_n_steps= 1
-    )
+    # trainer = pl.Trainer(
+    #     gpus=[0],
+    #     max_epochs=200,
+    #     num_sanity_val_steps=1,
+    #     logger=tb_logger,
+    #     callbacks=net_callbacks,
+    #     log_every_n_steps= 1
+    # )
 
-    #trainer = pl.Trainer(**params['lightning'], logger=logger, callbacks=[checkpoint_callback] ) #early_stop
+    trainer = pl.Trainer(**params['lightning'], logger=tb_logger, callbacks=net_callbacks ) #early_stop
 else:
     print('choose the mode for the network')
     raise NotImplementedError
@@ -125,11 +125,11 @@ elif args.test:
     trainer.test(net)
 elif args.inference:
     net.eval()
-    print('trying to make an infarance', args.indir )
+    print('trying to make an infarance', args.indir, args.volumes[1])
     if args.indir:
-        inferen_patch.inference_save (net, str(args.indir), args.outdir, None, params)
+        set_inf.inference_save (net, str(args.indir), args.outdir, None, params)
     else:
-        inferen_patch.inference_save (net, None, args.outdir, str(args.volumes[1]), params)
+        set_inf.inference_save (net, None, args.outdir, str(args.volumes[1]), params)
 else:
     print('you did not select the mode')
     raise NotImplementedError

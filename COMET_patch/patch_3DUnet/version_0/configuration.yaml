@@ -1,0 +1,257 @@
+checkpoint:
+  mode: min
+  monitor: val_loss
+  save_top_k: 3
+  verbose: true
+data:
+  image: D:\Yuliia_data\Yuliia_data\comet\MRI_image
+  label: D:\Yuliia_data\Yuliia_data\comet\MRI_2class
+  num_class: 3
+  patch:
+  - 128
+  - 128
+  - 64
+  root_dir: D:\Yuliia_data\Yuliia_data\lits\
+inference:
+  augmentation:
+  - monai.transforms.LoadImaged:
+      args: []
+      kwargs:
+        keys:
+        - image
+  - monai.transforms.AddChanneld:
+      args: []
+      kwargs:
+        keys:
+        - image
+  - monai.transforms.Orientationd:
+      args: []
+      kwargs:
+        axcodes: RAS
+        keys:
+        - image
+  - monai.transforms.NormalizeIntensityd:
+      args: []
+      kwargs:
+        keys:
+        - image
+  - monai.transforms.ToTensorD:
+      args: []
+      kwargs:
+        keys:
+        - image
+lightning:
+  fast_dev_run: true
+  gpus: 1
+  gradient_clip_val: 0
+  log_every_n_steps: 1
+  max_epochs: 200
+  num_sanity_val_steps: 0
+  overfit_batches: 0
+log:
+  name: patch_3DUnet
+  save_dir: COMET_patch
+loss:
+  monai.losses.DiceFocalLoss:
+    args: []
+    kwargs:
+      include_background: true
+      softmax: true
+      to_onehot_y: true
+net:
+  monai.networks.nets.HighResNet:
+    args: []
+    kwargs:
+      dropout_prob: 0.5
+      in_channels: 1
+      out_channels: 3
+      spatial_dims: 3
+optimizer:
+  torch.optim.AdamW:
+    args: []
+    kwargs:
+      lr: 1.0e-05
+      weight_decay: 0.0001
+packages:
+  matplotlib: 3.4.2
+  monai: 0.8.0
+  numpy: 1.21.1
+  pytorch_lightning: 1.4.0
+  sys: 3.8.10 (default, May 19 2021, 13:12:57) [MSC v.1916 64 bit (AMD64)]
+  torch: 1.9.0
+train:
+  augmentation:
+  - monai.transforms.LoadImaged:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+  - monai.transforms.AddChanneld:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+  - monai.transforms.SpacingD:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        mode:
+        - bilinear
+        - nearest
+        pixdim:
+        - 1
+        - 1
+        - 1
+  - monai.transforms.Orientationd:
+      args: []
+      kwargs:
+        axcodes: RAS
+        keys:
+        - image
+        - label
+  - monai.transforms.CropForegroundd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        source_key: image
+  - monai.transforms.RandCropByLabelClassesd:
+      args: []
+      kwargs:
+        allow_smaller: true
+        image_key: image
+        image_threshold: 0
+        keys:
+        - image
+        - label
+        label_key: label
+        num_classes: 3
+        num_samples: 8
+        ratios:
+        - 1
+        - 1
+        - 9
+        spatial_size:
+        - 128
+        - 128
+        - 128
+  - monai.transforms.SpatialPadd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        spatial_size:
+        - 32
+        - 32
+        - 32
+  - monai.transforms.RandFlipd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        prob: 0.2
+        spatial_axis:
+        - 0
+  - monai.transforms.RandFlipd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        prob: 0.2
+        spatial_axis:
+        - 1
+  - monai.transforms.RandFlipd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        prob: 0.2
+        spatial_axis:
+        - 2
+  - monai.transforms.RandRotate90d:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        max_k: 3
+        prob: 0.2
+  - monai.transforms.RandShiftIntensityd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        offsets: 0.2
+        prob: 0.5
+  - monai.transforms.NormalizeIntensityd:
+      args: []
+      kwargs:
+        keys:
+        - image
+  - monai.transforms.ToTensorD:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+valid:
+  augmentation:
+  - monai.transforms.LoadImaged:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+  - monai.transforms.AddChanneld:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+  - monai.transforms.SpacingD:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        mode:
+        - bilinear
+        - nearest
+        pixdim:
+        - 1
+        - 1
+        - 2
+  - monai.transforms.Orientationd:
+      args: []
+      kwargs:
+        axcodes: RAS
+        keys:
+        - image
+        - label
+  - monai.transforms.NormalizeIntensityd:
+      args: []
+      kwargs:
+        keys:
+        - image
+  - monai.transforms.CropForegroundd:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label
+        source_key: image
+  - monai.transforms.ToTensorD:
+      args: []
+      kwargs:
+        keys:
+        - image
+        - label

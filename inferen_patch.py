@@ -24,7 +24,7 @@ def inference_save(net, inputdir, outdir, volumes, params):
                 device = torch.device('cuda')
         else:
                 device = torch.device('cpu')
-
+        #device = torch.device('cpu')
         net = net.to(device)
 
         transforms = []
@@ -49,20 +49,22 @@ def inference_save(net, inputdir, outdir, volumes, params):
         for i, infer_data in enumerate(infer_loader):
         #for infer_data in infer_loader:
                 infer_inputs = infer_data["image"].to(device)
-                #print(f"batch_data image: {infer_data['image'].shape}")
+                print(f"batch_data image: {infer_data['image'].shape}")
 
-                #print('params.data.patch', params.data.patch)
-                roi_size = list(params.data.patch)
-                sw_batch_size = 1
+                print('params.data.patch', params.data.patch)
+                roi_size =  (160, 160, 160) #list(params.data.patch)
+                sw_batch_size = 4
+                print(roi_size)
 
                 #input = batch['image'].unsqueeze(0).to(device)#.to(torch.float32)
                 #output = net.forward(input)
                 #infer_data = batch["image"].unsqueeze(0).to(device)
+
                 with torch.no_grad():
-                        val_output = sliding_window_inference(infer_inputs, roi_size, sw_batch_size, net)
-                val_output = val_output[0,...]
+                        val_output = sliding_window_inference(infer_inputs, roi_size, sw_batch_size, net, overlap=0.25, padding_mode="replicate")
+                val_output = val_output[0,...].detach().cpu()
                 mask = torch.argmax(val_output, axis=0).int()
-                mask2 = mask.detach().cpu().numpy()
+                mask2 = mask.numpy()
                 #print(mask2.shape)
 
                 #print('checking image name' ,Path(infer_dicts[i]["image"]).name)
