@@ -8,10 +8,11 @@ data:
   label: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\seg
   root_dir: D:\Yuliia_data\Yuliia_data\lits\
   num_class: 3
+  patch: [96, 96, 96]
 
 lightning:
   accumulate_grad_batches: 4
-  fast_dev_run: false
+  fast_dev_run: True
   gpus: 1
   gradient_clip_val: 0
   log_every_n_steps: 1
@@ -20,15 +21,15 @@ lightning:
 
 
 log:
-  name: patch_Vnet_AG
+  name: patch_3DUnet
   save_dir: RESULTS_GABRIELLA
 
 loss:
   monai.losses.DiceCELoss:
     args: []
     kwargs:
-      softmax: True
-      to_onehot_y: False
+      softmax: true
+      to_onehot_y: True
 net:
   # gab_net.Vnet.VNet:
   #   args: []
@@ -36,11 +37,11 @@ net:
   #     num_class: 3 
   #     in_channels: 1
 
-  # gab_net.SimpleUnet.unet_3D:
-  #   args: []
-  #   kwargs:
-  #     n_classes: 3 
-  #     in_channels: 1
+  models.YNet.YNet:
+    args: []
+    kwargs:
+      n_class: 3
+      in_channels: 1
 
   # gab_net.AttentionUnet.AttentionUNet:
   #   args: []
@@ -48,11 +49,11 @@ net:
   #     num_class: 3 
   #     in_channel: 1
 
-  models.AttentionVNet.VNet:
-    args: []
-    kwargs:
-      num_class: 3
-      in_channels: 1
+  # gab_net.AttentionVNet.VNet:
+  #   args: []
+  #   kwargs:
+  #     num_class: 3 
+  #     in_channels: 1
 
   # monai.networks.nets.HighResNet:
   #   args: []
@@ -271,33 +272,20 @@ inference:
       kwargs:
         keys:
         - image
-  - monai.transforms.SpacingD:
+  - monai.transforms.Orientationd:
       args: []
       kwargs:
-        keys:
-        - image
-        mode:
-        - bilinear
-        pixdim:
-        - 1.0
-        - 1.0
-        - 1.0
-  - monai.transforms.ResizeD:
+        keys: ["image"]
+        axcodes: "RAS"
+  - monai.transforms.ScaleIntensityRanged:
       args: []
       kwargs:
-        keys:
-        - image
-        mode:
-        - trilinear
-        spatial_size:
-        - 256
-        - 256
-        - 128
-  - monai.transforms.NormalizeIntensityd:
-      args: []
-      kwargs:
-        keys:
-        - image
+        keys: ["image"]
+        a_min: -175
+        a_max: 250
+        b_min: 0.0
+        b_max: 1.0
+        clip: True
   - monai.transforms.ToTensorD:
       args: []
       kwargs:

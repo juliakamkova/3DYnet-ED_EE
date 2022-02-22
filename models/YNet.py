@@ -118,7 +118,7 @@ class YNet(nn.Module):
 
     """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
     That means you also need to decrease the learning rate."""
-    def __init__(self, n_classes=3):
+    def __init__(self, n_class=3):
         super().__init__()
 
         CHANNELS = [64, 128, 256, 512, 1024]
@@ -155,7 +155,7 @@ class YNet(nn.Module):
         self.convBlock_0_2 = ConvBlock(CHANNELS[0], CHANNELS[0])
 
         # final conv (without any concat)
-        self.final = nn.Conv3d(CHANNELS[0], n_classes, 1)
+        self.final = nn.Conv3d(CHANNELS[0], n_class, 1)
 
     def forward(self, x):
         x0, down0_0, down1_0, down2_0, down3_0, down4_0 = self.vggnet_0(x)
@@ -224,64 +224,64 @@ class YNet(nn.Module):
         return final
 
 
-# Output data dimension check
-
-data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
-label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
-net = YNet()
-#net.eval()
-net = net.to(device)
-net.apply(init)
-#net.eval()
-
-res = net(data)
-for item in res:
-    print(item.size())
-
-# Calculate network parameters
-num_parameter = .0
-for item in net.modules():
-
-    if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d):
-        num_parameter += (item.weight.size(0) * item.weight.size(1) *
-                          item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
-
-        if item.bias is not None:
-            num_parameter += item.bias.size(0)
-
-    elif isinstance(item, nn.PReLU):
-        num_parameter += item.num_parameters
-
-print(num_parameter)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
-iters = 0
-# training simulation
-
-for epoch in range(8):  # loop over the dataset multiple times
-    inputs = data
-    masks = label
-    for i in range(len(inputs)):
-        running_loss = 0.0
-        # get the inputs; data is a list of [inputs, labels]
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = net(inputs)
-        # print(masks)
-        loss = criterion(outputs, masks[i])
-        # print('mask i', masks[i])
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        running_loss += loss.item()
-        iters += 1
-
-        if iters % 2 == 0:
-            print('Prev Loss: {:.4f} '.format(
-                loss.item()))
-            epoch_loss = running_loss / (len(inputs))
+# # Output data dimension check
+#
+# data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
+# label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
+# net = YNet()
+# #net.eval()
+# net = net.to(device)
+# net.apply(init)
+# #net.eval()
+#
+# res = net(data)
+# for item in res:
+#     print(item.size())
+#
+# # Calculate network parameters
+# num_parameter = .0
+# for item in net.modules():
+#
+#     if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d):
+#         num_parameter += (item.weight.size(0) * item.weight.size(1) *
+#                           item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
+#
+#         if item.bias is not None:
+#             num_parameter += item.bias.size(0)
+#
+#     elif isinstance(item, nn.PReLU):
+#         num_parameter += item.num_parameters
+#
+# print(num_parameter)
+#
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+# iters = 0
+# # training simulation
+#
+# for epoch in range(8):  # loop over the dataset multiple times
+#     inputs = data
+#     masks = label
+#     for i in range(len(inputs)):
+#         running_loss = 0.0
+#         # get the inputs; data is a list of [inputs, labels]
+#
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+#
+#         # forward + backward + optimize
+#         outputs = net(inputs)
+#         # print(masks)
+#         loss = criterion(outputs, masks[i])
+#         # print('mask i', masks[i])
+#         loss.backward()
+#         optimizer.step()
+#
+#         # print statistics
+#         running_loss += loss.item()
+#         iters += 1
+#
+#         if iters % 2 == 0:
+#             print('Prev Loss: {:.4f} '.format(
+#                 loss.item()))
+#             epoch_loss = running_loss / (len(inputs))

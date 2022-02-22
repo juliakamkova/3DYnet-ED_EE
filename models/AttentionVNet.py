@@ -97,13 +97,13 @@ class Up(nn.Module) :
         return cat + self.conv(cat)
 
 
-class VNet(nn.Module) :
+class AttVNet(nn.Module) :
     """
     Main model
     """
 
     def __init__(self, in_channels=1, num_class=3) :
-        super(VNet, self).__init__()
+        super(AttVNet, self).__init__()
 
         self.down1 = nn.Sequential(
             nn.Conv3d(in_channels, 16, kernel_size=5, padding=2),
@@ -156,8 +156,8 @@ class VNet(nn.Module) :
 # res = net(data)
 # for item in res :
 #     print(item.size())
-
-# Calculate network parameters
+#
+# # Calculate network parameters
 # num_parameter = .0
 # for item in net.modules() :
 #
@@ -172,12 +172,12 @@ class VNet(nn.Module) :
 #         num_parameter += item.num_parameters
 #
 # print(num_parameter)
-
+#
 # criterion = nn.CrossEntropyLoss()
 # optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
 # iters = 0
-# training simulation
-
+# # training simulation
+#
 # for epoch in range(10) :  # loop over the dataset multiple times
 #     inputs = data
 #     masks = label
