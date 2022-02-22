@@ -78,7 +78,7 @@ class AttentionUNet(nn.Module) :
     Main model
     """
 
-    def __init__(self, in_channels, num_class, filters=[64, 128, 256, 512, 1024]) :
+    def __init__(self, in_channels, num_class, filters=[16, 32, 64, 128, 256]) :
         super(AttentionUNet, self).__init__()
 
         f1, f2, f3, f4, f5 = filters
@@ -101,47 +101,47 @@ class AttentionUNet(nn.Module) :
         self.up3 = Upsample(f3, f2, f2)
         self.up4 = Upsample(f2, f1, f1)
 
-        self.Conv = nn.Conv3d(64, num_class, kernel_size=1, stride=1, padding=0)
+        self.Conv = nn.Conv3d(filters[0], num_class, kernel_size=1, stride=1, padding=0)
 
     def forward(self, x) :
         down1 = self.down1(x)
-        print('down1', down1.shape)
+        # print('down1', down1.shape)
 
         down2 = self.MaxPool(down1)
         down2 = self.down2(down2)
-        print('down2', down2.shape)
+        # print('down2', down2.shape)
 
         down3 = self.MaxPool(down2)
         down3 = self.down3(down3)
-        print('down3', down3.shape)
+        # print('down3', down3.shape)
 
         down4 = self.MaxPool(down3)
         down4 = self.down4(down4)
-        print('down4', down4.shape)
+        # print('down4', down4.shape)
 
         center = self.MaxPool(down4)
         center = self.center(center)
-        print('center', center.shape)
+        # print('center', center.shape)
 
         ag1 = self.ag1(down4, center)
-        print('ag1', ag1.shape)
+        # print('ag1', ag1.shape)
         up1 = self.up1(center, ag1)
-        print('up1', ag1.shape)
+        # print('up1', ag1.shape)
         ag2 = self.ag2(down3, up1)
-        print('ag2', ag2.shape)
+        # print('ag2', ag2.shape)
         up2 = self.up2(up1, ag2)
-        print('up2', up2.shape)
+        # print('up2', up2.shape)
         ag3 = self.ag3(down2, up2)
-        print('ag3', ag3.shape)
+        # print('ag3', ag3.shape)
         up3 = self.up3(up2, ag3)
-        print('up3', up3.shape)
+        # print('up3', up3.shape)
         ag4 = self.ag4(down1, up3)
-        print('ag4', ag4.shape)
+        # print('ag4', ag4.shape)
         up4 = self.up4(up3, down1)
-        print('up4', up4.shape)
+        # print('up4', up4.shape)
 
         out = self.Conv(up4)
-        print(out.shape)
+        # print(out.shape)
 
         return out
 #

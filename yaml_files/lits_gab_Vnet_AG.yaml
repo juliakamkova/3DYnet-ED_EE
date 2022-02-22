@@ -28,7 +28,7 @@ loss:
     args: []
     kwargs:
       softmax: True
-      to_onehot_y: True
+      to_onehot_y: False
 net:
   # gab_net.Vnet.VNet:
   #   args: []
@@ -48,10 +48,10 @@ net:
   #     num_class: 3 
   #     in_channel: 1
 
-  models.AttentionVNet.AttVNet:
+  models.AttentionVNet.VNet:
     args: []
     kwargs:
-      num_class: 3 
+      num_class: 3
       in_channels: 1
 
   # monai.networks.nets.HighResNet:

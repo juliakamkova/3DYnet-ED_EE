@@ -93,7 +93,7 @@ class VNet(nn.Module) :
 
     def forward(self, x) :
         down1 = self.down1(x) + torch.cat(16 * [x], dim=1)
-        print('down', down1.shape)
+        #print('down', down1.shape)
         down2 = self.down2(down1)
         down3 = self.down3(down2)
         down4 = self.down4(down3)

@@ -15,7 +15,7 @@ def save_as_vol(output, full_name, outdir ):
     filename = Path(full_name).name
     new_vol = nib.load(full_name)
     img_3D = new_vol.get_fdata()
-    new_dim =  img_3D.shape
+    new_dim = img_3D.shape
     #print(new_dim)
     output_orig_size = F.interpolate(prediction, size=new_dim, mode = 'trilinear')
     mask2 = output_orig_size.squeeze().detach().cpu().numpy()
@@ -40,13 +40,14 @@ def generate_gallery(input, mask, prediction, writer, name_tag, global_step):
     prediction = prediction.detach().cpu().argmax(dim=0).float()
     #prediction  = prediction  / mask.max() #number of classes
 
-    #print('images shape from evaluation file :',input.shape, mask.shape, prediction.shape)
-    gallery = torch.cat((input, mask, prediction), dim=1)  # make it 64 (depth, axial), 192 (gt, mask, pred), 64   
-    #WT101 X.cat(): Use rearrange(X, '...->...') from https://github.com/arogozhnikov/einops
-    gallery = torch.stack((gallery, gallery, gallery), dim=0).numpy()  # make a fake grayscale image: R,G,B = intensity
-    #WT101 X.stack(): Use rearrange(X, '...->...') from https://github.com/arogozhnikov/einops
+    print(input.max(), mask.max(), prediction.max())
 
-#    print('gallery shape:',gallery.shape)
+    print('images shape from evaluation file :',input.shape, mask.shape, prediction.shape)
+    gallery = torch.cat((input, mask, prediction), dim=1)  # make it 64 (depth, axial), 192 (gt, mask, pred), 64   
+
+    gallery = torch.stack((gallery, gallery, gallery), dim=0).numpy()  # make a fake grayscale image: R,G,B = intensity
+
+    print('gallery shape:',gallery.shape)
     add_animated_gif(
                     writer=writer,
                     tag=name_tag,
