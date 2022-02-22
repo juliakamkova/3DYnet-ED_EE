@@ -183,9 +183,7 @@ class Framework(pl.LightningModule):
         monai_dice = self.dice_metric(y_pred=outputs2,y=labels2)
         print('from validation step checking Dice', monai_dice, batch_idx)
 
-        # print('val_step_Dice_liver', monai_dice[0])
-        # print('val_step_Dice_liver', monai_dice[1])
-        # self.log('val step Dice', monai_dice)
+        self.log('val step Dice', monai_dice)
 
         # summarywriter = self.logger.experiment
         # if batch_idx == 0:
@@ -212,20 +210,23 @@ class Framework(pl.LightningModule):
 
         #mean_val_dice = self.dice_metric.aggregate().item() #i think this belongs to patch version of the code
         #self.dice_metric.reset()
-
+        print("\n checkibg number of items", num_items)
+        #print("\n checking the dice", val_dice )
+        #print("\n checking the loss", val_loss)
         mean_val_dice = torch.tensor(val_dice / num_items)
         mean_val_loss = torch.tensor(val_loss / num_items)
+        #print("\n trying to debug tensorboard mean DICE and LOSS",mean_val_dice, mean_val_loss)
 
         if mean_val_dice > self.best_val_dice:
             self.best_val_dice = mean_val_dice
             self.best_val_epoch = self.current_epoch
 
         self.log('val_epoch_Dice', mean_val_dice)
-        self.log('val_loss', mean_val_loss)
+        self.log('val_loss', mean_val_loss) #this one is logging
         self.log('Best validation Dice', self.best_val_dice)
 
         print(
-            f"current epoch: {self.current_epoch} current val mean dice: {mean_val_dice:.4f} current val loss {val_loss:.3f}"
+            f"\ncurrent epoch: {self.current_epoch} current val mean dice: {mean_val_dice:.4f} current val loss {val_loss:.3f}"
             f"\nbest mean dice: {self.best_val_dice:.4f} at epoch: {self.best_val_epoch:.4f}"
         )
 
