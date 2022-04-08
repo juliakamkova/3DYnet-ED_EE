@@ -4,9 +4,9 @@ checkpoint:
   save_top_k: 3
   verbose: true
 data:
-  image: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\img
-  label: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\seg
-  root_dir: D:\Yuliia_data\Yuliia_data\lits\
+  image: /home/gabrielladalbenzio/LITS_segmentation/dataset/LITS/LITS_img
+  label: /home/gabrielladalbenzio/LITS_segmentation/dataset/LITS/LITS_seg
+  root_dir: /home/gabrielladalbenzio/LITS_segmentation/dataset/LITS/
   num_class: 3
 
 lightning:
@@ -15,7 +15,7 @@ lightning:
   gpus: 1
   gradient_clip_val: 0
   log_every_n_steps: 1
-  max_epochs: 5
+  max_epochs: 100
   num_sanity_val_steps: 1
 
 
@@ -28,7 +28,7 @@ loss:
     args: []
     kwargs:
       softmax: True
-      to_onehot_y: True
+      to_onehot_y: num_classes
 net:
   models.SimpleVNet.VNet:
     args: []
@@ -80,7 +80,7 @@ optimizer:
   torch.optim.AdamW:
     args: []
     kwargs:
-      lr: 0.001
+      lr: 0.00001
       weight_decay: 0.001
 train:
   augmentation:
