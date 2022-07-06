@@ -30,7 +30,7 @@ __2.Organize the data__
     │   ├──001.nii.gz   
 │   ├── valid/  
 │   └── test/  
-│   └── excluded/  	#48, 49, 50, 51, 52, 91, 89, 87, 41, 47, 38, 34, 32 
+│   └── excluded/  	#91, 89, 87, 52, 51, 50, 49, 48, 47, 41, 38, 34, 32 
 
 
 __3. Create a .yaml file__    
