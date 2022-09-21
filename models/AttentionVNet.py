@@ -1,18 +1,19 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def init(module) :
+def init(module):
     if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d) :
         nn.init.kaiming_normal_(module.weight.data, 0.25)
         nn.init.constant_(module.bias.data, 0)
 
 
-def convolution_1layers(in_dim, out_dim, activation) :
+def convolution_1layers(in_dim, out_dim, activation):
     """
         Basic convolutional module consisting of a Conv3d, non-linearity and optional batchnorm/groupnorm. """
 
@@ -22,7 +23,7 @@ def convolution_1layers(in_dim, out_dim, activation) :
         activation, )
 
 
-class AttentionGate(nn.Module) :
+class AttentionGate(nn.Module):
     """
     filter the features propagated through the skip connections
     """
@@ -35,7 +36,7 @@ class AttentionGate(nn.Module) :
         self.psi = nn.Conv3d(inter_channel, 1, kernel_size=1)
         self.sig = nn.Sigmoid()
 
-    def forward(self, x, g) :
+    def forward(self, x, g):
         g_conv = self.W_g(g)
         x_conv = self.W_x(x)
         out = self.relu(g_conv + x_conv)
@@ -45,7 +46,7 @@ class AttentionGate(nn.Module) :
         return out
 
 
-class RepeatConv(nn.Module) :
+class RepeatConv(nn.Module):
     """
     Repeat Conv + PReLU n times
     """
@@ -97,7 +98,7 @@ class Up(nn.Module) :
         return cat + self.conv(cat)
 
 
-class AttVNet(nn.Module) :
+class AttVNet(pl.LightningModule) :
     """
     Main model
     """
@@ -129,7 +130,7 @@ class AttVNet(nn.Module) :
         self.ag2 = AttentionGate(64, 256, 64)
         self.ag3 = AttentionGate(32, 128, 32)
 
-    def forward(self, x) :
+    def forward(self, x):
         down1 = self.down1(x) + torch.cat(16 * [x], dim=1)
         down2 = self.down2(down1)
         down3 = self.down3(down2)
