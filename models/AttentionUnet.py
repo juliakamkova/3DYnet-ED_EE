@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+import pytorch_lightning as pl
 
 
-def conv1(in_dim, out_dim, activation) :
+def conv1(in_dim, out_dim, activation):
     """
         Basic convolutional module consisting of a Conv3d, non-linearity and optional batchnorm/groupnorm. """
 
@@ -25,12 +26,12 @@ class ConvBlock(nn.Module) :
             nn.ReLU()
         )
 
-    def forward(self, x) :
+    def forward(self, x):
 
         return self.block(x)
 
 
-class Upsample(nn.Module) :
+class Upsample(nn.Module):
     """
     upsample, concat and conv
     """
@@ -50,7 +51,7 @@ class Upsample(nn.Module) :
         return out
 
 
-class AttentionGate(nn.Module) :
+class AttentionGate(nn.Module):
     """
     filter the features propagated through the skip connections
     """
@@ -73,7 +74,7 @@ class AttentionGate(nn.Module) :
         return out
 
 
-class AttentionUNet(nn.Module) :
+class AttentionUNet(pl.LightningModule):
     """
     Main model
     """
