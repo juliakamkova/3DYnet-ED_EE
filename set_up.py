@@ -111,8 +111,11 @@ class Framework(pl.LightningModule):
         return [optim]
 
     def training_step(self, batch, batch_idx):
-        input = batch['image'].cuda()  #shape[batch, channels, dim, dim , dim]  !TODO to device???
+        input = batch['image'].cuda()
+        print("checking shape in trening step ", input.shape)
+        #shape[batch, channels, dim, dim , dim]  !TODO to device???
         mask = batch['label'].cuda()
+        print("checking mask shape in trening step ", mask.shape)
         output = self.forward(input)
 
         # evaluation.save_batch(input.argmax(dim=0).float(), 'check_volume_15_09.nii')
@@ -126,7 +129,7 @@ class Framework(pl.LightningModule):
 
         train_monai_dice = self.dice_metric(y_pred=output1, y=mask1)
 
-        # summarywriter = self.logger.experiment
+        # summarywriter = self.logger.experiment #TODO
         # if batch_idx == 0:
         #     evaluation.generate_gallery(input[0,...],
         #                                 mask[0,...],
@@ -168,7 +171,7 @@ class Framework(pl.LightningModule):
         outputs = self.forward(input)
 
         val_loss = self.loss_function(outputs, masks)
-        #print('val loss inside the lightning', val_loss)
+        print('val loss inside the lightning', val_loss)
         # self.log('Val step loss', val_loss)
 
         # evaluation.save_batch(input.argmax(dim=0).float(), 'valid_check_volume_15_09.nii')
@@ -210,7 +213,7 @@ class Framework(pl.LightningModule):
 
         #mean_val_dice = self.dice_metric.aggregate().item() #i think this belongs to patch version of the code
         #self.dice_metric.reset()
-        print("\n checkibg number of items", num_items)
+        print("\n checking number of items in the validation set", num_items)
         #print("\n checking the dice", val_dice )
         #print("\n checking the loss", val_loss)
         mean_val_dice = torch.tensor(val_dice / num_items)
