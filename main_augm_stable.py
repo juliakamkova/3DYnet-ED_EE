@@ -1,4 +1,4 @@
-#!/usr/bin/venv2 python
+#!/usr/bin/venv2thon
 
 """
 Created on Thu Dec 19 14:50:43 2019
@@ -64,6 +64,7 @@ if args.train or args.restore:
 params = Box(params)
 
 n_cl = params.data.num_class
+print("-------------------------------------------checking batch---------------------", params['net'])
 # net = unet_3D()
 net = set_up.Framework(utils.class_loader(params['net'])[0], params, n_cl)
 # default used by the Trainer
@@ -125,10 +126,11 @@ elif args.test:
     trainer.test(net)
 elif args.inference:
     net.eval()
-    print('trying to make an infarance', args.indir, args.volumes[1])
     if args.indir:
+        print('trying to make an infarance', args.indir)
         set_inf.inference_save (net, str(args.indir), args.outdir, None, params)
     else:
+        print('trying to make an infarance', args.volumes[1])
         set_inf.inference_save (net, None, args.outdir, str(args.volumes[1]), params)
 else:
     print('you did not select the mode')
