@@ -5,22 +5,22 @@ import time
 
 import torch
 import torch.nn as nn
+import pytorch_lightning as pl
 import os
 
 from torchvision.io import read_image
 from torch.utils.data import Dataset
 
-
-class RepeatConv(nn.Module) :
+class RepeatConv(nn.Module):
     """
     Repeat Conv + PReLU n times
     """
 
-    def __init__(self, n_channels, n_conv) :
+    def __init__(self, n_channels, n_conv):
         super(RepeatConv, self).__init__()
 
         conv_list = []
-        for _ in range(n_conv) :
+        for _ in range(n_conv):
             conv_list.append(nn.Conv3d(n_channels, n_channels, kernel_size=5, padding=2))
             conv_list.append(nn.PReLU())
 
@@ -28,47 +28,49 @@ class RepeatConv(nn.Module) :
             *conv_list
         )
 
-    def forward(self, x) :
+    def forward(self, x):
         return self.conv(x)
 
 
-class Down(nn.Module) :
-    def __init__(self, in_channels, out_channels, n_conv) :
+class Down(nn.Module):
+    def __init__(self, in_channels, out_channels, n_conv):
         super(Down, self).__init__()
 
         self.downconv = nn.Sequential(
             nn.Conv3d(in_channels, out_channels, kernel_size=2, stride=2),
-            nn.PReLU()
+            # nn.BatchNorm3d(out_channels),
+            nn.PReLU(),
         )
         self.conv = RepeatConv(out_channels, n_conv)
 
-    def forward(self, x) :
+    def forward(self, x):
         out = self.downconv(x)
         return out + self.conv(out)
 
 
-class Up(nn.Module) :
-    def __init__(self, in_channels, out_channels, n_conv) :
+class Up(nn.Module):
+    def __init__(self, in_channels, out_channels, n_conv):
         super(Up, self).__init__()
 
         self.upconv = nn.Sequential(
             nn.ConvTranspose3d(in_channels, int(out_channels / 2), kernel_size=2, stride=2),
+            # nn.BatchNorm3d(out_channels),
             nn.PReLU()
         )
         self.conv = RepeatConv(out_channels, n_conv)
 
-    def forward(self, x, down) :
+    def forward(self, x, down):
         x = self.upconv(x)
         cat = torch.cat([x, down], dim=1)
         return cat + self.conv(cat)
 
 
-class VNet(nn.Module) :
+class VNet(pl.LightningModule):
     """
     Main model
     """
 
-    def __init__(self, in_channels, num_class) :
+    def __init__(self, in_channels, num_class):
         super(VNet, self).__init__()
 
         self.down1 = nn.Sequential(
@@ -91,9 +93,9 @@ class VNet(nn.Module) :
             nn.PReLU()
         )
 
-    def forward(self, x) :
+    def forward(self, x):
         down1 = self.down1(x) + torch.cat(16 * [x], dim=1)
-        #print('down', down1.shape)
+        # print('down', down1.shape)
         down2 = self.down2(down1)
         down3 = self.down3(down2)
         down4 = self.down4(down3)
@@ -103,7 +105,6 @@ class VNet(nn.Module) :
         up3 = self.up3(up2, down2)
         up4 = self.up4(up3, down1)
         return self.up5(up4)
-
 
 # def init(module) :
 #     if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d) :
@@ -174,4 +175,3 @@ class VNet(nn.Module) :
 #         #           (epoch + 1, i + 1, running_loss / 2000))
 #         #     running_loss = 0.0
 #
-

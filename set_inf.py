@@ -32,6 +32,7 @@ def inference_save (net, inputdir, outdir, volumes, params ):
         infer_dicts = [{'image':str(volumes)}]
     else:
         inputdir = Path(inputdir)
+        print('checking the directory', inputdir)
         volumes = sorted(Path(inputdir).glob('*.nii*'))
         print(volumes)
         infer_dicts = [{'image':str(image_name)} for image_name in volumes ]
@@ -43,19 +44,20 @@ def inference_save (net, inputdir, outdir, volumes, params ):
     for index, batch in enumerate(infer_ds):
 
         input = batch['image'].unsqueeze(0).to(device)#.to(torch.float32)
-        print(input.size())
+        print('input size', input.size())
+
         output = net.forward(input)
 
         output = output[0,...]
         vol_name=infer_dicts[index]["image"]
         mask = torch.argmax(output, axis=0).unsqueeze(0).unsqueeze(0).float()
-        #print('after argmax', mask.shape)
+        print('after argmax', mask.shape)
 
         filename = Path(vol_name).name 
         new_vol = nib.load(vol_name)
         img_3D = new_vol.get_fdata()
-        new_dim =  img_3D.shape
-        #print(new_dim)
+        new_dim = img_3D.shape
+        print('new dim', new_dim)
         output_orig_size = F.interpolate(mask, size=new_dim, mode = 'trilinear')
         mask2 = output_orig_size.squeeze().detach().cpu().numpy()
         mask2 = postprocessing.post_liver(mask2)

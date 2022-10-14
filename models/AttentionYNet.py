@@ -252,8 +252,6 @@ class AttentionYNet(pl.LightningModule):
 
         return final
 
-# Output data dimension check
-
 # data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
 # label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
 # net = AttentionYNet()
