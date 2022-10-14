@@ -110,7 +110,8 @@ class VGGNet(nn.Module):
 
 
 class YNet_noskip(nn.Module):
- 
+    """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
+    That means you also need to decrease the learning rate."""
 
     def __init__(self, n_class=3):
         super().__init__()
