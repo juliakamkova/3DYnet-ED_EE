@@ -19,7 +19,7 @@ pip install -r pip_req.txt
 __2.Organize the data__  
 ├── LITS_img/       # CT volumes/     
 │   ├── train/  
-│   │   ├──001.nii.gz    
+│   │   ├──001_seg.nii.gz    
 │   ├── valid/  
 │   └── test/  
 │   └── excluded/ *here comes lits volumes without tumor class on it (could also go to test)*
@@ -27,7 +27,7 @@ __2.Organize the data__
 
 ├──LITS_seg/  #GT with __THE SAME__ names as in LITS_img folder  
 │   ├── train/  
-    │   ├──001.nii.gz   
+    │   ├──001_seg.nii.gz   
 │   ├── valid/  
 │   └── test/  
 │   └── excluded/  	#91, 89, 87, 52, 51, 50, 49, 48, 47, 41, 38, 34, 32 
