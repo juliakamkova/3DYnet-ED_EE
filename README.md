@@ -57,4 +57,5 @@ __4. Run *main_augm_stable.py*__
     
     could also specify where to save with --save_dir
 ```
+>> In the training set:0-100. In the valid set: 32,34,38,41,87,89,91,101-120. The rest in the test set.
 
