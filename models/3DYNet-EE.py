@@ -1,16 +1,9 @@
 import torch.nn as nn
 import torch
-from torch.nn import functional as F
 import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-def init(module):
-    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-        nn.init.kaiming_normal_(module.weight.data, 0.25)
-        nn.init.constant_(module.bias.data, 0)
 
 
 def init(module):
@@ -34,31 +27,8 @@ class ConvBlock(nn.Module):
         return x
 
 
-class AttentionGate(nn.Module):
-    """
-    filter the features propagated through the skip connections
-    """
-
-    def __init__(self, in_channels, gating_channel, inter_channel):
-        super(AttentionGate, self).__init__()
-        self.W_g = nn.Conv3d(gating_channel, inter_channel, kernel_size=1)
-        self.W_x = nn.Conv3d(in_channels, inter_channel, kernel_size=2, stride=2)
-        self.relu = nn.ReLU()
-        self.psi = nn.Conv3d(inter_channel, 1, kernel_size=1)
-        self.sig = nn.Sigmoid()
-
-    def forward(self, x, g):
-        g_conv = self.W_g(g)
-        x_conv = self.W_x(x)
-        out = self.relu(g_conv + x_conv)
-        out = self.sig(self.psi(out))
-        out = F.upsample(out, size=x.size()[2:], mode='trilinear')
-        out = x * out
-        return out
-
-
 class VGGNet(nn.Module):
-    def __init__(self, in_channels=1, VGG_CHANNELS=[16, 32, 64, 128, 128]):
+    def __init__(self, in_channels=1, VGG_CHANNELS=[64, 128, 256, 512, 512]):
         super().__init__()
         self.in_channels = in_channels
 
@@ -140,14 +110,14 @@ class VGGNet(nn.Module):
         return x, down0, down1, down2, down3, down4
 
 
-class AttentionYNet(pl.LightningModule):
+class YNet(nn.Module):
     """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
     That means you also need to decrease the learning rate."""
 
-    def __init__(self, n_classes=3):
+    def __init__(self, n_class=3):
         super().__init__()
 
-        CHANNELS = [16, 32, 64, 128, 256]
+        CHANNELS = [64, 128, 256, 512, 1024]
 
         self.vggnet_0 = VGGNet(in_channels=1)
         self.vggnet_1 = VGGNet(in_channels=1)
@@ -180,38 +150,34 @@ class AttentionYNet(pl.LightningModule):
         self.convBlock_0_1 = ConvBlock(CHANNELS[0], CHANNELS[0])
         self.convBlock_0_2 = ConvBlock(CHANNELS[0], CHANNELS[0])
 
-        self.ag1 = AttentionGate(CHANNELS[3], CHANNELS[4], CHANNELS[3])
-        self.ag2 = AttentionGate(CHANNELS[2], CHANNELS[3], CHANNELS[2])
-        self.ag3 = AttentionGate(CHANNELS[1], CHANNELS[2], CHANNELS[1])
-        self.ag4 = AttentionGate(CHANNELS[0], CHANNELS[1], CHANNELS[0])
-
         # final conv (without any concat)
-        self.final = nn.Conv3d(CHANNELS[0], n_classes, 1)
+        self.final = nn.Conv3d(CHANNELS[0], n_class, 1)
 
     def forward(self, x):
         x0, down0_0, down1_0, down2_0, down3_0, down4_0 = self.vggnet_0(x)
         x1, down0_1, down1_1, down2_1, down3_1, down4_1 = self.vggnet_1(x)
-        # print('x0', x0.shape)
-        # print('x1', x1.shape)
+
+        print('x0', x0.shape)
+        print('x1', x1.shape)
         center = torch.cat([x0, x1], dim=1)
+        # print('center', center.shape)
         center = self.convBlock_c0(center)
         center = self.convBlock_c1(center)
         print('center final', center.shape)
 
         up4 = self.upsampler_4(center)
+        # print('up4', up4.shape)
         down4 = torch.cat([down4_0, down4_1], dim=1)
+        # print('down4_0', down4_0.shape)
+        # print('down4-1', down4_1.shape)
         print('down4', down4.shape)
-
         up4 = torch.cat([down4, up4], dim=1)
-        # up4 = torch.cat([up4, ag1], dim=1)
         up4 = self.convBlock_4_0(up4)
         up4 = self.convBlock_4_1(up4)
         up4 = self.convBlock_4_2(up4)
         print('up4 FINAL', up4.shape)
-        ag1 = self.ag1(up4, center)
-        print('ag1', ag1.shape)
 
-        up3 = self.upsampler_3(ag1)
+        up3 = self.upsampler_3(up4)
         down3 = torch.cat([down3_0, down3_1], dim=1)
         print('down3', down3.shape)
         up3 = torch.cat([down3, up3], dim=1)
@@ -219,21 +185,18 @@ class AttentionYNet(pl.LightningModule):
         up3 = self.convBlock_3_1(up3)
         up3 = self.convBlock_3_2(up3)
         print('up3 FINAL', up3.shape)
-        ag2 = self.ag2(up3, up4)
-        print('ag2', ag2.shape)
 
-        up2 = self.upsampler_2(ag2)
+        up2 = self.upsampler_2(up3)
+
         down2 = torch.cat([down2_0, down2_1], dim=1)
         print('down2', down2.shape)
         up2 = torch.cat([down2, up2], dim=1)
         up2 = self.convBlock_2_0(up2)
         up2 = self.convBlock_2_1(up2)
         up2 = self.convBlock_2_2(up2)
-        print('up2 Final', up2.shape)
-        ag3 = self.ag3(up2, up3)
-        print('ag3', ag3.shape)
+        print('up2', up2.shape)
 
-        up1 = self.upsampler_1(ag3)
+        up1 = self.upsampler_1(up2)
         down1 = torch.cat([down1_0, down1_1], dim=1)
         print('down1', down1.shape)
         up1 = torch.cat([down1, up1], dim=1)
@@ -241,10 +204,8 @@ class AttentionYNet(pl.LightningModule):
         up1 = self.convBlock_1_1(up1)
         up1 = self.convBlock_1_2(up1)
         print('up1', up1.shape)
-        ag4 = self.ag4(up1, up2)
-        print('ag4', ag4.shape)
 
-        up0 = self.upsampler_0(ag4)
+        up0 = self.upsampler_0(up1)
         down0 = torch.cat([down0_0, down0_1], dim=1)
         print('down0', down0.shape)
         up0 = torch.cat([down0, up0], dim=1)
@@ -258,65 +219,64 @@ class AttentionYNet(pl.LightningModule):
 
         return final
 
-
-# Output data dimension check
-
-data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
-label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
-net = AttentionYNet()
-# net.eval()
-net = net.to(device)
-net.apply(init)
-# net.eval()
-
-res = net(data)
-for item in res:
-    print(item.size())
-
-# Calculate network parameters
-num_parameter = .0
-for item in net.modules():
-
-    if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d):
-        num_parameter += (item.weight.size(0) * item.weight.size(1) *
-                          item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
-
-        if item.bias is not None:
-            num_parameter += item.bias.size(0)
-
-    elif isinstance(item, nn.PReLU):
-        num_parameter += item.num_parameters
-
-print(num_parameter)
-
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
-iters = 0
-# training simulation
-
-for epoch in range(10):  # loop over the dataset multiple times
-    inputs = data
-    masks = label
-    for i in range(len(inputs)):
-        running_loss = 0.0
-        # get the inputs; data is a list of [inputs, labels]
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = net(inputs)
-        # print(masks)
-        loss = criterion(outputs, masks[i])
-        # print('mask i', masks[i])
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        running_loss += loss.item()
-        iters += 1
-
-        if iters % 2 == 0:
-            print('Prev Loss: {:.4f} '.format(
-                loss.item()))
-            epoch_loss = running_loss / (len(inputs))
+# # Output data dimension check
+#
+# data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
+# label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
+# net = YNet_noskip()
+# #net.eval()
+# net = net.to(device)
+# net.apply(init)
+# #net.eval()
+#
+# res = net(data)
+# for item in res:
+#     print(item.size())
+#
+# # Calculate network parameters
+# num_parameter = .0
+# for item in net.modules():
+#
+#     if isinstance(item, nn.Conv3d) or isinstance(item, nn.ConvTranspose3d):
+#         num_parameter += (item.weight.size(0) * item.weight.size(1) *
+#                           item.weight.size(2) * item.weight.size(3) * item.weight.size(4))
+#
+#         if item.bias is not None:
+#             num_parameter += item.bias.size(0)
+#
+#     elif isinstance(item, nn.PReLU):
+#         num_parameter += item.num_parameters
+#
+# print(num_parameter)
+#
+# criterion = nn.CrossEntropyLoss()
+# optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+# iters = 0
+# # training simulation
+#
+# for epoch in range(8):  # loop over the dataset multiple times
+#     inputs = data
+#     masks = label
+#     for i in range(len(inputs)):
+#         running_loss = 0.0
+#         # get the inputs; data is a list of [inputs, labels]
+#
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+#
+#         # forward + backward + optimize
+#         outputs = net(inputs)
+#         # print(masks)
+#         loss = criterion(outputs, masks[i])
+#         # print('mask i', masks[i])
+#         loss.backward()
+#         optimizer.step()
+#
+#         # print statistics
+#         running_loss += loss.item()
+#         iters += 1
+#
+#         if iters % 2 == 0:
+#             print('Prev Loss: {:.4f} '.format(
+#                 loss.item()))
+#             epoch_loss = running_loss / (len(inputs))

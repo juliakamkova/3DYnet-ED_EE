@@ -1,13 +1,10 @@
 import torch.nn as nn
 import torch
+from torch.nn import functional as F
+import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-def init(module):
-    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-        nn.init.kaiming_normal_(module.weight.data, 0.25)
-        nn.init.constant_(module.bias.data, 0)
 
 
 def init(module):
@@ -31,8 +28,31 @@ class ConvBlock(nn.Module):
         return x
 
 
+class AttentionGate(nn.Module):
+    """
+    filter the features propagated through the skip connections
+    """
+
+    def __init__(self, in_channels, gating_channel, inter_channel):
+        super(AttentionGate, self).__init__()
+        self.W_g = nn.Conv3d(gating_channel, inter_channel, kernel_size=1)
+        self.W_x = nn.Conv3d(in_channels, inter_channel, kernel_size=2, stride=2)
+        self.relu = nn.ReLU()
+        self.psi = nn.Conv3d(inter_channel, 1, kernel_size=1)
+        self.sig = nn.Sigmoid()
+
+    def forward(self, x, g):
+        g_conv = self.W_g(g)
+        x_conv = self.W_x(x)
+        out = self.relu(g_conv + x_conv)
+        out = self.sig(self.psi(out))
+        out = F.upsample(out, size=x.size()[2:], mode='trilinear')
+        out = x * out
+        return out
+
+
 class VGGNet(nn.Module):
-    def __init__(self, in_channels=1, VGG_CHANNELS=[64, 128, 256, 512, 512]):
+    def __init__(self, in_channels=1, VGG_CHANNELS=[16, 32, 64, 128, 128]):
         super().__init__()
         self.in_channels = in_channels
 
@@ -109,19 +129,19 @@ class VGGNet(nn.Module):
         x = self.relu_4_2(self.conv_4_2(x))
         down4 = self.relu_4aT(self.down_4aT(x))
         x = self.maxp_4(down4)
-        print('x', x.shape)
+        # print('x', x.shape)
 
         return x, down0, down1, down2, down3, down4
 
 
-class YNet(nn.Module):
-
+class AttentionYNet(pl.LightningModule):
     """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
     That means you also need to decrease the learning rate."""
-    def __init__(self, n_class=3):
+
+    def __init__(self, n_classes=3):
         super().__init__()
 
-        CHANNELS = [64, 128, 256, 512, 1024]
+        CHANNELS = [16, 32, 64, 128, 256]
 
         self.vggnet_0 = VGGNet(in_channels=1)
         self.vggnet_1 = VGGNet(in_channels=1)
@@ -130,113 +150,121 @@ class YNet(nn.Module):
         self.convBlock_c1 = ConvBlock(CHANNELS[4], CHANNELS[4])
 
         self.upsampler_4 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_4_0 = ConvBlock(2*CHANNELS[4], CHANNELS[3])
+        self.convBlock_4_0 = ConvBlock(2 * CHANNELS[4], CHANNELS[3])
         self.convBlock_4_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
         self.convBlock_4_2 = ConvBlock(CHANNELS[3], CHANNELS[3])
 
         self.upsampler_3 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_3_0 = ConvBlock(CHANNELS[4]+CHANNELS[3], CHANNELS[3])
+        self.convBlock_3_0 = ConvBlock(CHANNELS[4] + CHANNELS[3], CHANNELS[3])
         self.convBlock_3_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
         self.convBlock_3_2 = ConvBlock(CHANNELS[3], CHANNELS[2])
 
         self.upsampler_2 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_2_0 = ConvBlock(CHANNELS[3]+CHANNELS[2], CHANNELS[2])
+        self.convBlock_2_0 = ConvBlock(CHANNELS[3] + CHANNELS[2], CHANNELS[2])
         self.convBlock_2_1 = ConvBlock(CHANNELS[2], CHANNELS[2])
         self.convBlock_2_2 = ConvBlock(CHANNELS[2], CHANNELS[1])
 
         self.upsampler_1 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_1_0 = ConvBlock(CHANNELS[2]+CHANNELS[1], CHANNELS[1])
+        self.convBlock_1_0 = ConvBlock(CHANNELS[2] + CHANNELS[1], CHANNELS[1])
         self.convBlock_1_1 = ConvBlock(CHANNELS[1], CHANNELS[1])
         self.convBlock_1_2 = ConvBlock(CHANNELS[1], CHANNELS[0])
 
         self.upsampler_0 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_0_0 = ConvBlock(CHANNELS[1]+CHANNELS[0], CHANNELS[0])
+        self.convBlock_0_0 = ConvBlock(CHANNELS[1] + CHANNELS[0], CHANNELS[0])
         self.convBlock_0_1 = ConvBlock(CHANNELS[0], CHANNELS[0])
         self.convBlock_0_2 = ConvBlock(CHANNELS[0], CHANNELS[0])
 
+        self.ag1 = AttentionGate(CHANNELS[3], CHANNELS[4], CHANNELS[3])
+        self.ag2 = AttentionGate(CHANNELS[2], CHANNELS[3], CHANNELS[2])
+        self.ag3 = AttentionGate(CHANNELS[1], CHANNELS[2], CHANNELS[1])
+        self.ag4 = AttentionGate(CHANNELS[0], CHANNELS[1], CHANNELS[0])
+
         # final conv (without any concat)
-        self.final = nn.Conv3d(CHANNELS[0], n_class, 1)
+        self.final = nn.Conv3d(CHANNELS[0], n_classes, 1)
 
     def forward(self, x):
         x0, down0_0, down1_0, down2_0, down3_0, down4_0 = self.vggnet_0(x)
         x1, down0_1, down1_1, down2_1, down3_1, down4_1 = self.vggnet_1(x)
-
-        print('x0', x0.shape)
-        print('x1', x1.shape)
+        #   # print('x0', x0.shape)
+        #   # print('x1', x1.shape)
         center = torch.cat([x0, x1], dim=1)
-        #print('center', center.shape)
         center = self.convBlock_c0(center)
         center = self.convBlock_c1(center)
-        print('center final', center.shape)
+        # print('center final', center.shape)
 
         up4 = self.upsampler_4(center)
-        #print('up4', up4.shape)
-        down4 = torch.cat([down4_0, down4_1],dim=1)
-        #print('down4_0', down4_0.shape)
-        #print('down4-1', down4_1.shape)
-        print('down4', down4.shape)
+        down4 = torch.cat([down4_0, down4_1], dim=1)
+        # print('down4', down4.shape)
+
         up4 = torch.cat([down4, up4], dim=1)
+        # up4 = torch.cat([up4, ag1], dim=1)
         up4 = self.convBlock_4_0(up4)
         up4 = self.convBlock_4_1(up4)
         up4 = self.convBlock_4_2(up4)
-        print('up4 FINAL', up4.shape)
+        # print('up4 FINAL', up4.shape)
+        ag1 = self.ag1(up4, center)
+        # print('ag1', ag1.shape)
 
-        up3 = self.upsampler_3(up4)
-        down3 = torch.cat([down3_0, down3_1],dim=1)
-        print('down3', down3.shape)
-        up3 = torch.cat([down3, up3],dim=1)
+        up3 = self.upsampler_3(ag1)
+        down3 = torch.cat([down3_0, down3_1], dim=1)
+        # print('down3', down3.shape)
+        up3 = torch.cat([down3, up3], dim=1)
         up3 = self.convBlock_3_0(up3)
         up3 = self.convBlock_3_1(up3)
         up3 = self.convBlock_3_2(up3)
-        print('up3 FINAL', up3.shape)
+        # print('up3 FINAL', up3.shape)
+        ag2 = self.ag2(up3, up4)
+        # print('ag2', ag2.shape)
 
-        up2 = self.upsampler_2(up3)
-
+        up2 = self.upsampler_2(ag2)
         down2 = torch.cat([down2_0, down2_1], dim=1)
-        print('down2', down2.shape)
+        # print('down2', down2.shape)
         up2 = torch.cat([down2, up2], dim=1)
         up2 = self.convBlock_2_0(up2)
         up2 = self.convBlock_2_1(up2)
         up2 = self.convBlock_2_2(up2)
-        print('up2', up2.shape)
+        # print('up2 Final', up2.shape)
+        ag3 = self.ag3(up2, up3)
+        # print('ag3', ag3.shape)
 
-        up1 = self.upsampler_1(up2)
+        up1 = self.upsampler_1(ag3)
         down1 = torch.cat([down1_0, down1_1], dim=1)
-        print('down1', down1.shape)
+        # print('down1', down1.shape)
         up1 = torch.cat([down1, up1], dim=1)
         up1 = self.convBlock_1_0(up1)
         up1 = self.convBlock_1_1(up1)
         up1 = self.convBlock_1_2(up1)
-        print('up1', up1.shape)
+        # print('up1', up1.shape)
+        ag4 = self.ag4(up1, up2)
+        # print('ag4', ag4.shape)
 
-        up0 = self.upsampler_0(up1)
+        up0 = self.upsampler_0(ag4)
         down0 = torch.cat([down0_0, down0_1], dim=1)
-        print('down0', down0.shape)
+        # print('down0', down0.shape)
         up0 = torch.cat([down0, up0], dim=1)
         up0 = self.convBlock_0_0(up0)
         up0 = self.convBlock_0_1(up0)
         up0 = self.convBlock_0_2(up0)
-        print('up0', up0.shape)
+        # print('up0', up0.shape)
 
         final = self.final(up0)
-        print('final', final.shape)
+        # print('final', final.shape)
 
         return final
 
+# Output data dimension check
 
-# # Output data dimension check
-#
 # data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
 # label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
-# net = YNet()
-# #net.eval()
+# net = AttentionYNet()
+# # net.eval()
 # net = net.to(device)
 # net.apply(init)
-# #net.eval()
+# # net.eval()
 #
 # res = net(data)
 # for item in res:
-#     print(item.size())
+#       # print(item.size())
 #
 # # Calculate network parameters
 # num_parameter = .0
@@ -251,15 +279,15 @@ class YNet(nn.Module):
 #
 #     elif isinstance(item, nn.PReLU):
 #         num_parameter += item.num_parameters
-#
-# print(num_parameter)
+
+#   # print(num_parameter)
 #
 # criterion = nn.CrossEntropyLoss()
-# optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
+# optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 # iters = 0
 # # training simulation
 #
-# for epoch in range(8):  # loop over the dataset multiple times
+# for epoch in range(10):  # loop over the dataset multiple times
 #     inputs = data
 #     masks = label
 #     for i in range(len(inputs)):
@@ -271,17 +299,17 @@ class YNet(nn.Module):
 #
 #         # forward + backward + optimize
 #         outputs = net(inputs)
-#         # print(masks)
+#         #   # print(masks)
 #         loss = criterion(outputs, masks[i])
-#         # print('mask i', masks[i])
+#         #   # print('mask i', masks[i])
 #         loss.backward()
 #         optimizer.step()
 #
-#         # print statistics
+#         #   # print statistics
 #         running_loss += loss.item()
 #         iters += 1
 #
 #         if iters % 2 == 0:
-#             print('Prev Loss: {:.4f} '.format(
+#               # print('Prev Loss: {:.4f} '.format(
 #                 loss.item()))
 #             epoch_loss = running_loss / (len(inputs))
