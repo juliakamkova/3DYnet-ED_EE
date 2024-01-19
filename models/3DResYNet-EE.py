@@ -1,0 +1,428 @@
+from functools import partial
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import wandb
+from tqdm import tqdm
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.cuda.empty_cache()
+CUDA_LAUNCH_BLOCKING = 1
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_channel, out_channel):
+        super().__init__()
+
+        self.conv = nn.Conv3d(in_channel, out_channel, kernel_size=(3, 3, 3), stride=1, padding=1)
+        self.batchNorm = nn.BatchNorm3d(out_channel)
+        self.selu = nn.SELU()
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.batchNorm(x)
+        x = self.selu(x)
+        return x
+
+
+def get_inplanes():
+    return [16, 32, 64, 128, 256]
+
+
+def conv3x3x3(in_planes, out_planes, stride=1):
+    return nn.Conv3d(in_planes,
+                     out_planes,
+                     kernel_size=3,
+                     stride=stride,
+                     padding=1,
+                     bias=False)
+
+
+def conv1x1x1(in_planes, out_planes, stride=1):
+    return nn.Conv3d(in_planes,
+                     out_planes,
+                     kernel_size=1,
+                     stride=stride,
+                     bias=False)
+
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1, downsample=None):
+        super().__init__()
+
+        self.conv1 = conv3x3x3(in_planes, planes, stride)
+        self.bn1 = nn.BatchNorm3d(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3x3(planes, planes)
+        self.bn2 = nn.BatchNorm3d(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, in_planes, planes, stride=1, downsample=None):
+        super().__init__()
+
+        self.conv1 = conv1x1x1(in_planes, planes)
+        self.bn1 = nn.BatchNorm3d(planes)
+        self.conv2 = conv3x3x3(planes, planes, stride)
+        self.bn2 = nn.BatchNorm3d(planes)
+        self.conv3 = conv1x1x1(planes, planes * self.expansion)
+        self.bn3 = nn.BatchNorm3d(planes * self.expansion)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        residual = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+
+        out = self.conv3(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            residual = self.downsample(x)
+
+        out += residual
+        out = self.relu(out)
+
+        return out
+
+
+class ResNet(nn.Module):
+
+    def __init__(self,
+                 block,
+                 layers,
+                 block_inplanes,
+                 n_input_channels=1,
+                 conv1_t_size=7,
+                 conv1_t_stride=1,
+                 no_max_pool=True,
+                 shortcut_type='B',
+                 widen_factor=1.0,
+                 num_class=3):
+        super().__init__()
+
+        block_inplanes = [int(x * widen_factor) for x in block_inplanes]
+
+        self.in_planes = block_inplanes[0]
+        self.no_max_pool = no_max_pool
+
+        self.conv1 = nn.Conv3d(n_input_channels,
+                               self.in_planes,
+                               kernel_size=(conv1_t_size, 7, 7),
+                               stride=(conv1_t_stride, 1, 1),
+                               padding=(conv1_t_size // 2, 3, 3),
+                               bias=False)
+        self.bn1 = nn.BatchNorm3d(self.in_planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1) # Change the kernel size to from 3 to 2
+        self.layer1 = self._make_layer(block, block_inplanes[0], layers[0],
+                                       shortcut_type)
+        self.layer2 = self._make_layer(block,
+                                       block_inplanes[1],
+                                       layers[1],
+                                       shortcut_type,
+                                       stride=2)
+        self.layer3 = self._make_layer(block,
+                                       block_inplanes[2],
+                                       layers[2],
+                                       shortcut_type,
+                                       stride=2)
+        self.layer4 = self._make_layer(block,
+                                       block_inplanes[3],
+                                       layers[3],
+                                       shortcut_type,
+                                       stride=2)
+        self.layer5 = self._make_layer(block,
+                                       block_inplanes[4],
+                                       layers[4],
+                                       shortcut_type,
+                                       stride=2)
+
+        self.avgpool = nn.AdaptiveAvgPool3d((8, 8, 2))
+        self.fc = nn.Linear(block_inplanes[3] * block.expansion, num_class)
+
+        # for m in self.modules():
+        #     if isinstance(m, nn.Conv3d):
+        #         nn.init.kaiming_normal_(m.weight,
+        #                                 mode='fan_out',
+        #                                 nonlinearity='relu')
+        #     elif isinstance(m, nn.BatchNorm3d):
+        #         nn.init.constant_(m.weight, 1)
+        #         nn.init.constant_(m.bias, 0)
+
+    def _downsample_basic_block(self, x, planes, stride):
+        out = F.avg_pool3d(x, kernel_size=1, stride=stride)
+        zero_pads = torch.zeros(out.size(0), planes - out.size(1), out.size(2),
+                                out.size(3), out.size(4))
+        if isinstance(out.data, torch.cuda.FloatTensor):
+            zero_pads = zero_pads.cuda()
+
+        out = torch.cat([out.data, zero_pads], dim=1)
+
+        return out
+
+    def _make_layer(self, block, planes, blocks, shortcut_type, stride=1):
+        downsample = None
+        if stride != 1 or self.in_planes != planes * block.expansion:
+            if shortcut_type == 'A':
+                downsample = partial(self._downsample_basic_block,
+                                     planes=planes * block.expansion,
+                                     stride=stride)
+            else:
+                downsample = nn.Sequential(
+                    conv1x1x1(self.in_planes, planes * block.expansion, stride),
+                    nn.BatchNorm3d(planes * block.expansion))
+
+        layers = []
+        layers.append(
+            block(in_planes=self.in_planes,
+                  planes=planes,
+                  stride=stride,
+                  downsample=downsample))
+        self.in_planes = planes * block.expansion
+        for i in range(1, blocks):
+            layers.append(block(self.in_planes, planes))
+
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        if not self.no_max_pool:
+            x = self.maxpool(x)
+
+        layer1 = self.layer1(x)
+        layer2 = self.layer2(layer1)
+        layer3 = self.layer3(layer2)
+        layer4 = self.layer4(layer3)
+        layer5 = self.layer5(layer4)
+
+        avg0 = self.avgpool(layer4)
+
+        avg = avg0.view(avg0.size(0), -1)
+
+        return avg0, layer1, layer2, layer3, layer4, layer5
+
+
+def generate_model(model_depth, **kwargs):
+    assert model_depth in [18, 34], "Supported model depths are 18 or 34."
+
+    if model_depth == 18:
+        model = ResNet(Bottleneck, [2, 2, 2, 2, 1], get_inplanes(), **kwargs)
+    elif model_depth == 34:
+        model = ResNet(Bottleneck, [3, 4, 6, 3], get_inplanes(), **kwargs)
+
+    return model
+
+
+class ResYNetEE3D(nn.Module):
+    """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
+    That means you also need to decrease the learning rate."""
+
+    def __init__(self, num_class=3):
+        super().__init__()
+
+        CHANNELS = [16, 32, 64, 128, 256]
+
+        self.vggnet_0 = ResNet(BasicBlock, [2, 2, 2, 2, 1], get_inplanes())
+        self.vggnet_1 = ResNet(BasicBlock, [2, 2, 2, 2, 1], get_inplanes())
+
+        self.convBlock_c0 = ConvBlock(CHANNELS[4], CHANNELS[4])
+        self.convBlock_c1 = ConvBlock(CHANNELS[4], CHANNELS[4])
+
+        self.upsampler_4 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
+        self.convBlock_4_0 = ConvBlock(3 * CHANNELS[4], CHANNELS[3])
+        self.convBlock_4_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
+        self.convBlock_4_2 = ConvBlock(CHANNELS[3], CHANNELS[3])
+
+        self.upsampler_3 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
+        self.convBlock_3_0 = ConvBlock(CHANNELS[4] + CHANNELS[3], CHANNELS[3])
+        self.convBlock_3_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
+        self.convBlock_3_2 = ConvBlock(CHANNELS[3], CHANNELS[2])
+
+        self.upsampler_2 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
+        self.convBlock_2_0 = ConvBlock(CHANNELS[3] + CHANNELS[2], CHANNELS[2])
+        self.convBlock_2_1 = ConvBlock(CHANNELS[2], CHANNELS[2])
+        self.convBlock_2_2 = ConvBlock(CHANNELS[2], CHANNELS[1])
+
+        self.upsampler_1 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
+        self.convBlock_1_0 = ConvBlock(CHANNELS[2] + CHANNELS[1], CHANNELS[1])
+        self.convBlock_1_1 = ConvBlock(CHANNELS[1], CHANNELS[1])
+        self.convBlock_1_2 = ConvBlock(CHANNELS[1], CHANNELS[0])
+
+        self.upsampler_0 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
+        self.convBlock_0_0 = ConvBlock(CHANNELS[1] + CHANNELS[0], CHANNELS[0])
+        self.convBlock_0_1 = ConvBlock(CHANNELS[0], CHANNELS[0])
+        self.convBlock_0_2 = ConvBlock(CHANNELS[0], CHANNELS[0])
+
+        # final conv (without any concat)
+        self.final = nn.Conv3d(CHANNELS[0], num_class, 1)
+
+    def forward(self, x):
+        x0, down0_0, down1_0, down2_0, down3_0, down4_0 = self.vggnet_0(x)
+        x1, down0_1, down1_1, down2_1, down3_1, down4_1 = self.vggnet_1(x)
+
+        print('x0', x0.shape)
+        print('x1', x1.shape)
+        center = torch.cat([x0, x1], dim=1)
+        # print('center', center.shape)
+        center = self.convBlock_c0(center)
+        center = self.convBlock_c1(center)
+        print('center final', center.shape)
+
+        up4 = self.upsampler_4(center)
+        # print('up4', up4.shape)
+        down4 = torch.cat([down4_0, down4_1], dim=1)
+        # print('down4_0', down4_0.shape)
+        # print('down4-1', down4_1.shape)
+        print('down4', down4.shape)
+        up4 = torch.cat([down4, up4], dim=1)
+        up4 = self.convBlock_4_0(up4)
+        up4 = self.convBlock_4_1(up4)
+        up4 = self.convBlock_4_2(up4)
+        print('up4 FINAL', up4.shape)
+
+        up3 = self.upsampler_3(up4)
+        down3 = torch.cat([down3_0, down3_1], dim=1)
+        print('down3', down3.shape)
+        up3 = torch.cat([down3, up3], dim=1)
+        up3 = self.convBlock_3_0(up3)
+        up3 = self.convBlock_3_1(up3)
+        up3 = self.convBlock_3_2(up3)
+        print('up3 FINAL', up3.shape)
+
+        up2 = self.upsampler_2(up3)
+
+        down2 = torch.cat([down2_0, down2_1], dim=1)
+        print('down2', down2.shape)
+        up2 = torch.cat([down2, up2], dim=1)
+        up2 = self.convBlock_2_0(up2)
+        up2 = self.convBlock_2_1(up2)
+        up2 = self.convBlock_2_2(up2)
+        print('up2', up2.shape)
+
+        up1 = self.upsampler_1(up2)
+        down1 = torch.cat([down1_0, down1_1], dim=1)
+        print('down1', down1.shape)
+        up1 = torch.cat([down1, up1], dim=1)
+        up1 = self.convBlock_1_0(up1)
+        up1 = self.convBlock_1_1(up1)
+        up1 = self.convBlock_1_2(up1)
+        print('up1', up1.shape)
+
+        up0 = self.upsampler_0(up1)
+        down0 = torch.cat([down0_0, down0_1], dim=1)
+        print('down0', down0.shape)
+        up0 = torch.cat([down0, up0], dim=1)
+        up0 = self.convBlock_0_0(up0)
+        up0 = self.convBlock_0_1(up0)
+        up0 = self.convBlock_0_2(up0)
+        print('up0', up0.shape)
+
+        final = self.final(up0)
+        print('final', final.shape)
+
+        return final
+
+
+def dice_coefficient(pred, target, smooth=1.0):
+    intersection = (pred * target).sum()
+    union = pred.sum() + target.sum()
+
+    dice = (2.0 * intersection + smooth) / (union + smooth)
+    return dice.item()
+
+
+if __name__ == "__main__":
+
+    # Initialize wandb
+    wandb.login(key="297cfd1ecfe9d0db1ecc07a5abbfd49ca777a329")
+    wandb.init(project='3DYNet-ResNet', name='training_run_1 (3DResYNETEE)')
+
+    # Pseudo data
+    # data = torch.randn((1, 1, 128, 128, 64)).cuda()
+    # label = torch.randint(0, 2, (1, 1, 128, 128, 64)).cuda() #with decoder
+    # label = torch.randint(0, 2, (1, 1, 3)).cuda()
+    data = torch.randn((1, 1, 256, 256, 64)).to(device)  # the input has to be 96
+    label = torch.randint(0, 2, (1, 1, 256, 256, 64)).to(device)
+
+    # Log hyperparameters
+    config = wandb.config
+    config.batch_size = 1  # Pseudo data, so use batch_size=1
+    config.lr = 0.001
+    config.epochs = 20
+
+    # Model, criterion, optimizer
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_depth = 18
+    model = ResYNetEE3D(num_class=3)
+    # model = ResNetEncoder(model_depth, n_input_channels=1, n_classes=3)
+    model.to(device)  # Move the model to the specified device
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+
+    # Training loop
+    for epoch in range(config.epochs):
+        model.train()
+        total_loss = 0.0
+        total_dice = 0.0
+
+        for _ in tqdm(range(100), desc=f'Epoch {epoch + 1}/{config.epochs}'):  # Use a small number for pseudo data
+            # Forward pass
+            outputs = model(data)
+            #print("outputs", outputs.shape)
+            #print("label", label.shape)
+            # loss = criterion(outputs, label.squeeze(1)) with decoder
+
+            loss = criterion(outputs, label.squeeze(1))
+
+            # Backward pass and optimization
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+            # Convert logits to predictions (multiclass n=3 segmentation)
+            predictions = torch.argmax(outputs, dim=1)
+            dice = dice_coefficient(predictions, label.squeeze(1))
+            total_dice += dice
+
+        # Log metrics to wandb
+        avg_loss = total_loss / 100  # 100 batches for pseudo data
+        avg_dice = total_dice / 100
+
+        wandb.log({'Loss': avg_loss, 'Dice': avg_dice})

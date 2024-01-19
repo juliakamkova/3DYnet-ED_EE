@@ -1,13 +1,9 @@
 import torch.nn as nn
 import torch
+import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-def init(module):
-    if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-        nn.init.kaiming_normal_(module.weight.data, 0.25)
-        nn.init.constant_(module.bias.data, 0)
 
 
 def init(module):
@@ -115,9 +111,9 @@ class VGGNet(nn.Module):
 
 
 class YNet(nn.Module):
-
     """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
     That means you also need to decrease the learning rate."""
+
     def __init__(self, n_class=3):
         super().__init__()
 
@@ -130,27 +126,27 @@ class YNet(nn.Module):
         self.convBlock_c1 = ConvBlock(CHANNELS[4], CHANNELS[4])
 
         self.upsampler_4 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_4_0 = ConvBlock(2*CHANNELS[4], CHANNELS[3])
+        self.convBlock_4_0 = ConvBlock(2 * CHANNELS[4], CHANNELS[3])
         self.convBlock_4_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
         self.convBlock_4_2 = ConvBlock(CHANNELS[3], CHANNELS[3])
 
         self.upsampler_3 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_3_0 = ConvBlock(CHANNELS[4]+CHANNELS[3], CHANNELS[3])
+        self.convBlock_3_0 = ConvBlock(CHANNELS[4] + CHANNELS[3], CHANNELS[3])
         self.convBlock_3_1 = ConvBlock(CHANNELS[3], CHANNELS[3])
         self.convBlock_3_2 = ConvBlock(CHANNELS[3], CHANNELS[2])
 
         self.upsampler_2 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_2_0 = ConvBlock(CHANNELS[3]+CHANNELS[2], CHANNELS[2])
+        self.convBlock_2_0 = ConvBlock(CHANNELS[3] + CHANNELS[2], CHANNELS[2])
         self.convBlock_2_1 = ConvBlock(CHANNELS[2], CHANNELS[2])
         self.convBlock_2_2 = ConvBlock(CHANNELS[2], CHANNELS[1])
 
         self.upsampler_1 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_1_0 = ConvBlock(CHANNELS[2]+CHANNELS[1], CHANNELS[1])
+        self.convBlock_1_0 = ConvBlock(CHANNELS[2] + CHANNELS[1], CHANNELS[1])
         self.convBlock_1_1 = ConvBlock(CHANNELS[1], CHANNELS[1])
         self.convBlock_1_2 = ConvBlock(CHANNELS[1], CHANNELS[0])
 
         self.upsampler_0 = nn.Upsample(scale_factor=2, mode='trilinear', align_corners=True)
-        self.convBlock_0_0 = ConvBlock(CHANNELS[1]+CHANNELS[0], CHANNELS[0])
+        self.convBlock_0_0 = ConvBlock(CHANNELS[1] + CHANNELS[0], CHANNELS[0])
         self.convBlock_0_1 = ConvBlock(CHANNELS[0], CHANNELS[0])
         self.convBlock_0_2 = ConvBlock(CHANNELS[0], CHANNELS[0])
 
@@ -164,16 +160,16 @@ class YNet(nn.Module):
         print('x0', x0.shape)
         print('x1', x1.shape)
         center = torch.cat([x0, x1], dim=1)
-        #print('center', center.shape)
+        # print('center', center.shape)
         center = self.convBlock_c0(center)
         center = self.convBlock_c1(center)
         print('center final', center.shape)
 
         up4 = self.upsampler_4(center)
-        #print('up4', up4.shape)
-        down4 = torch.cat([down4_0, down4_1],dim=1)
-        #print('down4_0', down4_0.shape)
-        #print('down4-1', down4_1.shape)
+        # print('up4', up4.shape)
+        down4 = torch.cat([down4_0, down4_1], dim=1)
+        # print('down4_0', down4_0.shape)
+        # print('down4-1', down4_1.shape)
         print('down4', down4.shape)
         up4 = torch.cat([down4, up4], dim=1)
         up4 = self.convBlock_4_0(up4)
@@ -182,9 +178,9 @@ class YNet(nn.Module):
         print('up4 FINAL', up4.shape)
 
         up3 = self.upsampler_3(up4)
-        down3 = torch.cat([down3_0, down3_1],dim=1)
+        down3 = torch.cat([down3_0, down3_1], dim=1)
         print('down3', down3.shape)
-        up3 = torch.cat([down3, up3],dim=1)
+        up3 = torch.cat([down3, up3], dim=1)
         up3 = self.convBlock_3_0(up3)
         up3 = self.convBlock_3_1(up3)
         up3 = self.convBlock_3_2(up3)
@@ -223,12 +219,11 @@ class YNet(nn.Module):
 
         return final
 
-
 # # Output data dimension check
 #
 # data = torch.randn((1, 1, 96, 96, 96)).to(device)  # the input has to be 96
 # label = torch.randint(0, 2, (1, 1, 96, 96, 96)).to(device)
-# net = YNet()
+# net = YNet_noskip()
 # #net.eval()
 # net = net.to(device)
 # net.apply(init)

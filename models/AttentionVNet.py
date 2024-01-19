@@ -4,7 +4,7 @@ from torch.nn import functional as F
 import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0on3" if torch.cuda.is_available() else "cpu")
 
 
 def init(module):
@@ -98,7 +98,7 @@ class Up(nn.Module) :
         return cat + self.conv(cat)
 
 
-class AttVNet(pl.LightningModule) :
+class AttVNet(pl.LightningModule):
     """
     Main model
     """
@@ -131,6 +131,7 @@ class AttVNet(pl.LightningModule) :
         self.ag3 = AttentionGate(32, 128, 32)
 
     def forward(self, x):
+        print("input size", x.shape)
         down1 = self.down1(x) + torch.cat(16 * [x], dim=1)
         down2 = self.down2(down1)
         down3 = self.down3(down2)

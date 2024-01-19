@@ -14,7 +14,7 @@ def conv1(in_dim, out_dim, activation):
         activation, )
 
 
-class ConvBlock(nn.Module) :
+class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channel, kernel_size=3, stride=1, padding=1) :
         super(ConvBlock, self).__init__()
         self.block = nn.Sequential(
