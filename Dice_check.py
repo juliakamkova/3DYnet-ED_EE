@@ -200,11 +200,11 @@ parser.add_argument('-csv', '--csv', dest='file_main_results', help='CSV file to
 
 args = parser.parse_args()
 
-folder_prediction = Path('D:\\pytorch_version\\Final_test_net\\seg_res_valid\\finnal_inference')
+folder_prediction = Path('D:\\LITS_segmentation\RESULTS_GABRIELLA\\Vnet_inference_gabi\\inference_VNetAG_new2')
 #folder_gt = Path(args.folder_gt )
 #folder_prediction = Path(args.folder_prediction)
-folder_gt  = Path('D:\\Yuliia_data\\Yuliia_data\\comet\\MRI_2class\\valid')
-file_main_results  = Path('12_05_check_result_table.csv')
+folder_gt  = Path('D:\\Yuliia_data\\Yuliia_data\\lits\\seg\\TEST')
+file_main_results  = Path('LITS_scores.csv')
 #file_main_results = Path(args.file_main_results)
 
 file_metr = Path('meticks_by_case.csv')
@@ -220,9 +220,12 @@ fold_scv = folder_prediction.parent
 
 for case in folder_prediction.iterdir():
     case1 = case.name
+    case2 = case1.split('.')[0]+'.'+case1.split('.')[1]
+    print('checking the name of the prediction ', case1)
+    print('checking the folder of the prediction ', case)
     prediction = nib.load(folder_prediction/case1).get_fdata()
-    print(folder_gt/case1)
-    gt = nib.load(folder_gt/case1).get_fdata()
+    print('checking the gt file name',folder_gt/case2)
+    gt = nib.load(folder_gt/case2).get_fdata()
     gt = np.round(gt)
 
     tk_dice, tu_dice, sn_liver, sp_liver, ac_liver , pr_liver, rc_liver, sn_tumor, sp_tumor, ac_tumor, pr_tumor, rc_tumor = case_metrics(gt, prediction, fold_scv/file_metr, case1, export_cases=True)

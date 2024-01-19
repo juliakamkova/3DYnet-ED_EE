@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+import pytorch_lightning as pl
 
 CUDA_LAUNCH_BLOCKING = 1
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -32,7 +33,7 @@ class ConvBlock(nn.Module):
 
 
 class VGGNet(nn.Module):
-    def __init__(self, in_channels=1, VGG_CHANNELS=[64, 128, 256, 512, 512]):
+    def __init__(self, in_channels=1, VGG_CHANNELS=[32, 64, 128, 256, 256]):
         super().__init__()
         self.in_channels = in_channels
 
@@ -84,6 +85,7 @@ class VGGNet(nn.Module):
         self.maxp_4 = nn.MaxPool3d((2, 2, 2), stride=(2, 2, 2))
 
     def forward(self, x):
+        #print("input1", x.shape)
         x = self.relu_0_0(self.conv_0_0(x))
         down0 = self.relu_0aT(self.down_0aT(x))
         x = self.maxp_0(down0)
@@ -109,19 +111,19 @@ class VGGNet(nn.Module):
         x = self.relu_4_2(self.conv_4_2(x))
         down4 = self.relu_4aT(self.down_4aT(x))
         x = self.maxp_4(down4)
-        print('x', x.shape)
+        #print('x', x.shape)
 
         return x, down0, down1, down2, down3, down4
 
 
-class YNet(nn.Module):
+class YNet(pl.LightningModule):
 
     """ Warning: Check your learning rate. The bigger your network, more parameters to learn.
     That means you also need to decrease the learning rate."""
     def __init__(self, n_class=3):
         super().__init__()
 
-        CHANNELS = [64, 128, 256, 512, 1024]
+        CHANNELS = [32, 64, 128, 256, 512]
 
         self.vggnet_0 = VGGNet(in_channels=1)
         self.vggnet_1 = VGGNet(in_channels=1)
@@ -161,65 +163,65 @@ class YNet(nn.Module):
         x0, down0_0, down1_0, down2_0, down3_0, down4_0 = self.vggnet_0(x)
         x1, down0_1, down1_1, down2_1, down3_1, down4_1 = self.vggnet_1(x)
 
-        print('x0', x0.shape)
-        print('x1', x1.shape)
+        #print('x0', x0.shape)
+        #print('x1', x1.shape)
         center = torch.cat([x0, x1], dim=1)
         #print('center', center.shape)
         center = self.convBlock_c0(center)
         center = self.convBlock_c1(center)
-        print('center final', center.shape)
+        #print('center final', center.shape)
 
         up4 = self.upsampler_4(center)
         #print('up4', up4.shape)
         down4 = torch.cat([down4_0, down4_1],dim=1)
         #print('down4_0', down4_0.shape)
         #print('down4-1', down4_1.shape)
-        print('down4', down4.shape)
+        #print('down4', down4.shape)
         up4 = torch.cat([down4, up4], dim=1)
         up4 = self.convBlock_4_0(up4)
         up4 = self.convBlock_4_1(up4)
         up4 = self.convBlock_4_2(up4)
-        print('up4 FINAL', up4.shape)
+        #print('up4 FINAL', up4.shape)
 
         up3 = self.upsampler_3(up4)
         down3 = torch.cat([down3_0, down3_1],dim=1)
-        print('down3', down3.shape)
+        #print('down3', down3.shape)
         up3 = torch.cat([down3, up3],dim=1)
         up3 = self.convBlock_3_0(up3)
         up3 = self.convBlock_3_1(up3)
         up3 = self.convBlock_3_2(up3)
-        print('up3 FINAL', up3.shape)
+        #print('up3 FINAL', up3.shape)
 
         up2 = self.upsampler_2(up3)
 
         down2 = torch.cat([down2_0, down2_1], dim=1)
-        print('down2', down2.shape)
+        #print('down2', down2.shape)
         up2 = torch.cat([down2, up2], dim=1)
         up2 = self.convBlock_2_0(up2)
         up2 = self.convBlock_2_1(up2)
         up2 = self.convBlock_2_2(up2)
-        print('up2', up2.shape)
+        #print('up2', up2.shape)
 
         up1 = self.upsampler_1(up2)
         down1 = torch.cat([down1_0, down1_1], dim=1)
-        print('down1', down1.shape)
+        #print('down1', down1.shape)
         up1 = torch.cat([down1, up1], dim=1)
         up1 = self.convBlock_1_0(up1)
         up1 = self.convBlock_1_1(up1)
         up1 = self.convBlock_1_2(up1)
-        print('up1', up1.shape)
+        #print('up1', up1.shape)
 
         up0 = self.upsampler_0(up1)
         down0 = torch.cat([down0_0, down0_1], dim=1)
-        print('down0', down0.shape)
+       # #print('down0', down0.shape)
         up0 = torch.cat([down0, up0], dim=1)
         up0 = self.convBlock_0_0(up0)
         up0 = self.convBlock_0_1(up0)
         up0 = self.convBlock_0_2(up0)
-        print('up0', up0.shape)
+        ##print('up0', up0.shape)
 
         final = self.final(up0)
-        print('final', final.shape)
+        ##print('final', final.shape)
 
         return final
 
@@ -236,7 +238,7 @@ class YNet(nn.Module):
 #
 # res = net(data)
 # for item in res:
-#     print(item.size())
+#     #print(item.size())
 #
 # # Calculate network parameters
 # num_parameter = .0
@@ -252,7 +254,7 @@ class YNet(nn.Module):
 #     elif isinstance(item, nn.PReLU):
 #         num_parameter += item.num_parameters
 #
-# print(num_parameter)
+# #print(num_parameter)
 #
 # criterion = nn.CrossEntropyLoss()
 # optimizer = torch.optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
@@ -271,17 +273,17 @@ class YNet(nn.Module):
 #
 #         # forward + backward + optimize
 #         outputs = net(inputs)
-#         # print(masks)
+#         # #print(masks)
 #         loss = criterion(outputs, masks[i])
-#         # print('mask i', masks[i])
+#         # #print('mask i', masks[i])
 #         loss.backward()
 #         optimizer.step()
 #
-#         # print statistics
+#         # #print statistics
 #         running_loss += loss.item()
 #         iters += 1
 #
 #         if iters % 2 == 0:
-#             print('Prev Loss: {:.4f} '.format(
+#             #print('Prev Loss: {:.4f} '.format(
 #                 loss.item()))
 #             epoch_loss = running_loss / (len(inputs))

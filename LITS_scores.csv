@@ -1,0 +1,15 @@
+version|date|object|sn|sp|ac|pr|rc|dice|lesion_gt|lesion_found|correct_lesion|location
+AG_3DUnet|2022-12-20|liver|0.922|0.995|0.991|0.837|0.922|0.871|108|101|35|D:\LITS_segmentation\RESULTS_GABRIELLA\AG_3DUnet\inference
+AG_3DUnet|2022-12-20|tumor|0.429|0.999|0.998|0.403|0.429|0.38|108|101|35|D:\LITS_segmentation\RESULTS_GABRIELLA\AG_3DUnet\inference
+Ynet_AG_finalversion|2022-12-20|liver|0.914|0.995|0.992|0.844|0.914|0.873|108|53|19|D:\LITS_segmentation\RESULTS_GABRIELLA\Ynet_AG_finalversion\inference
+Ynet_AG_finalversion|2022-12-20|tumor|0.311|1.0|0.997|0.541|0.311|0.313|108|53|19|D:\LITS_segmentation\RESULTS_GABRIELLA\Ynet_AG_finalversion\inference
+version_0|2023-01-06|liver|0.895|0.995|0.989|0.837|0.895|0.851|108|72|18|D:\LITS_segmentation\RESULTS_GABRIELLA\3DYNetAG_final_new_training\version_0\inference
+version_0|2023-01-06|tumor|0.236|0.999|0.997|0.314|0.236|0.202|108|72|18|D:\LITS_segmentation\RESULTS_GABRIELLA\3DYNetAG_final_new_training\version_0\inference
+Vnet_inference_gabi|2023-01-26|liver|0.88|0.996|0.992|0.847|0.88|0.855|108|75|24|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNet_new2
+Vnet_inference_gabi|2023-01-26|tumor|0.37|0.999|0.997|0.5|0.37|0.351|108|75|24|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNet_new2
+Vnet_inference_gabi|2023-01-26|liver|0.816|0.996|0.99|0.855|0.816|0.806|108|60|27|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNetAG_new2
+Vnet_inference_gabi|2023-01-26|tumor|0.36|0.998|0.996|0.36|0.36|0.268|108|60|27|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNetAG_new2
+Vnet_inference_gabi|2023-01-26|liver|0.88|0.996|0.992|0.847|0.88|0.855|108|75|24|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNet_new2
+Vnet_inference_gabi|2023-01-26|tumor|0.37|0.999|0.997|0.5|0.37|0.351|108|75|24|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNet_new2
+Vnet_inference_gabi|2023-01-26|liver|0.816|0.996|0.99|0.855|0.816|0.806|108|60|27|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNetAG_new2
+Vnet_inference_gabi|2023-01-26|tumor|0.36|0.998|0.996|0.36|0.36|0.268|108|60|27|D:\LITS_segmentation\RESULTS_GABRIELLA\Vnet_inference_gabi\inference_VNetAG_new2

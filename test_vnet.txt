@@ -1,0 +1,179 @@
+Python modules:
+numpy   : 1.21.1
+torch   : 1.9.0
+pytorch_lightning   : 1.4.0
+monai   : 0.8.0
+sys   : 3.8.10 (default, May 19 2021, 13:12:57) [MSC v.1916 64 bit (AMD64)]
+matplotlib   : 3.4.2
+from prepare data note: loss function that is used:  DiceCELoss(
+  (dice): DiceLoss()
+  (cross_entropy): CrossEntropyLoss()
+)
+from config optimizer check optim AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 1e-05
+    weight_decay: 0.0001
+)
+Validation sanity check: 0it [00:00, ?it/s]Validation sanity check:   0%|          | 0/1 [00:00<?, ?it/s]val loss inside the lightning tensor(1.8120, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+Validation sanity check: 100%|##########| 1/1 [00:01<00:00,  1.98s/it]
+ checking number of items in the validation set 1
+
+current epoch: 0 current val mean dice: 0.0000 current val loss 1.812
+best mean dice: 0.0000 at epoch: 0.0000
+                                                                      Training: -1it [00:00, ?it/s]Training:   0%|          | 0/5 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/5 [00:00<?, ?it/s] Epoch 0:  20%|##        | 1/5 [00:02<00:05,  1.50s/it]Epoch 0:  20%|##        | 1/5 [00:02<00:05,  1.50s/it, loss=1.79, v_num=0]Epoch 0:  40%|####      | 2/5 [00:05<00:05,  1.89s/it, loss=1.79, v_num=0]Epoch 0:  40%|####      | 2/5 [00:05<00:05,  1.89s/it, loss=1.82, v_num=0]Epoch 0:  60%|######    | 3/5 [00:08<00:04,  2.07s/it, loss=1.82, v_num=0]Epoch 0:  60%|######    | 3/5 [00:08<00:04,  2.07s/it, loss=1.84, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.8047, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.39it/s][AEpoch 0: 100%|##########| 5/5 [00:09<00:00,  1.50s/it, loss=1.84, v_num=0]val loss inside the lightning tensor(1.8372, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.40it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 0 current val mean dice: 0.0000 current val loss 3.642
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 0: 100%|##########| 5/5 [00:09<00:00,  1.62s/it, loss=1.84, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 0:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.84, v_num=0]        Epoch 1:   0%|          | 0/5 [00:00<00:00, 1002.70it/s, loss=1.84, v_num=0]Epoch 1:  20%|##        | 1/5 [00:03<00:06,  1.55s/it, loss=1.86, v_num=0]  Epoch 1:  40%|####      | 2/5 [00:05<00:05,  1.93s/it, loss=1.86, v_num=0]Epoch 1:  40%|####      | 2/5 [00:05<00:05,  1.93s/it, loss=1.87, v_num=0]Epoch 1:  60%|######    | 3/5 [00:08<00:04,  2.10s/it, loss=1.85, v_num=0]Epoch 1:  80%|########  | 4/5 [00:08<00:01,  1.68s/it, loss=1.85, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7975, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.40it/s][Aval loss inside the lightning tensor(1.8322, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.40it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 1 current val mean dice: 0.0000 current val loss 3.630
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 1: 100%|##########| 5/5 [00:09<00:00,  1.64s/it, loss=1.85, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 1:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.85, v_num=0]        Epoch 2:   0%|          | 0/5 [00:00<00:00, 993.91it/s, loss=1.85, v_num=0]Epoch 2:  20%|##        | 1/5 [00:02<00:05,  1.48s/it, loss=1.84, v_num=0] Epoch 2:  40%|####      | 2/5 [00:05<00:05,  1.89s/it, loss=1.84, v_num=0]Epoch 2:  40%|####      | 2/5 [00:05<00:05,  1.89s/it, loss=1.84, v_num=0]Epoch 2:  60%|######    | 3/5 [00:08<00:04,  2.08s/it, loss=1.85, v_num=0]Epoch 2:  80%|########  | 4/5 [00:08<00:01,  1.66s/it, loss=1.85, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7902, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.39it/s][Aval loss inside the lightning tensor(1.8272, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.38it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 2 current val mean dice: 0.0000 current val loss 3.617
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 2: 100%|##########| 5/5 [00:09<00:00,  1.63s/it, loss=1.85, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 2:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.85, v_num=0]        Epoch 3:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.85, v_num=0]Epoch 3:  20%|##        | 1/5 [00:03<00:06,  1.57s/it, loss=1.85, v_num=0]Epoch 3:  40%|####      | 2/5 [00:05<00:05,  1.94s/it, loss=1.85, v_num=0]Epoch 3:  40%|####      | 2/5 [00:05<00:05,  1.94s/it, loss=1.85, v_num=0]Epoch 3:  60%|######    | 3/5 [00:08<00:04,  2.12s/it, loss=1.85, v_num=0]Epoch 3:  80%|########  | 4/5 [00:08<00:01,  1.70s/it, loss=1.85, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7827, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.39it/s][Aval loss inside the lightning tensor(1.8221, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.39it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 3 current val mean dice: 0.0000 current val loss 3.605
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 3: 100%|##########| 5/5 [00:09<00:00,  1.66s/it, loss=1.85, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(1.4000e-05)
+Epoch 3:   0%|          | 0/5 [00:00<00:00, 1001.98it/s, loss=1.85, v_num=0]Epoch 4:   0%|          | 0/5 [00:00<00:00, 1001.98it/s, loss=1.85, v_num=0]Epoch 4:  20%|##        | 1/5 [00:03<00:06,  1.56s/it, loss=1.84, v_num=0]  Epoch 4:  40%|####      | 2/5 [00:05<00:05,  1.96s/it, loss=1.84, v_num=0]Epoch 4:  40%|####      | 2/5 [00:05<00:05,  1.96s/it, loss=1.84, v_num=0]Epoch 4:  60%|######    | 3/5 [00:08<00:04,  2.13s/it, loss=1.84, v_num=0]Epoch 4:  80%|########  | 4/5 [00:08<00:01,  1.71s/it, loss=1.84, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7751, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.40it/s][Aval loss inside the lightning tensor(1.8169, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.39it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 4 current val mean dice: 0.0000 current val loss 3.592
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 4: 100%|##########| 5/5 [00:09<00:00,  1.66s/it, loss=1.84, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 4:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.84, v_num=0]        Epoch 5:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.84, v_num=0]Epoch 5:  20%|##        | 1/5 [00:03<00:06,  1.59s/it, loss=1.84, v_num=0]Epoch 5:  40%|####      | 2/5 [00:05<00:05,  1.97s/it, loss=1.84, v_num=0]Epoch 5:  40%|####      | 2/5 [00:05<00:05,  1.97s/it, loss=1.83, v_num=0]Epoch 5:  60%|######    | 3/5 [00:08<00:04,  2.14s/it, loss=1.83, v_num=0]Epoch 5:  80%|########  | 4/5 [00:08<00:01,  1.71s/it, loss=1.83, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7674, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.37it/s][Aval loss inside the lightning tensor(1.8117, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.37it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 5 current val mean dice: 0.0000 current val loss 3.579
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 5: 100%|##########| 5/5 [00:10<00:00,  1.67s/it, loss=1.83, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 5:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.83, v_num=0]        Epoch 6:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.83, v_num=0]Epoch 6:  20%|##        | 1/5 [00:02<00:05,  1.46s/it, loss=1.83, v_num=0]Epoch 6:  40%|####      | 2/5 [00:05<00:05,  1.87s/it, loss=1.83, v_num=0]Epoch 6:  40%|####      | 2/5 [00:05<00:05,  1.87s/it, loss=1.83, v_num=0]Epoch 6:  60%|######    | 3/5 [00:08<00:04,  2.07s/it, loss=1.83, v_num=0]Epoch 6:  80%|########  | 4/5 [00:08<00:01,  1.66s/it, loss=1.83, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7596, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.39it/s][Aval loss inside the lightning tensor(1.8063, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.39it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 6 current val mean dice: 0.0000 current val loss 3.566
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 6: 100%|##########| 5/5 [00:09<00:00,  1.62s/it, loss=1.83, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 6:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.83, v_num=0]        Epoch 7:   0%|          | 0/5 [00:00<00:00, 1001.27it/s, loss=1.83, v_num=0]Epoch 7:  20%|##        | 1/5 [00:03<00:06,  1.62s/it, loss=1.82, v_num=0]  Epoch 7:  40%|####      | 2/5 [00:05<00:05,  1.98s/it, loss=1.82, v_num=0]Epoch 7:  40%|####      | 2/5 [00:05<00:05,  1.98s/it, loss=1.81, v_num=0]Epoch 7:  60%|######    | 3/5 [00:08<00:04,  2.15s/it, loss=1.81, v_num=0]Epoch 7:  80%|########  | 4/5 [00:08<00:01,  1.72s/it, loss=1.81, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7515, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.38it/s][Aval loss inside the lightning tensor(1.8010, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.38it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 7 current val mean dice: 0.0000 current val loss 3.553
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 7: 100%|##########| 5/5 [00:10<00:00,  1.68s/it, loss=1.81, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 7:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.81, v_num=0]        Epoch 8:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.81, v_num=0]Epoch 8:  20%|##        | 1/5 [00:03<00:06,  1.57s/it, loss=1.8, v_num=0]Epoch 8:  40%|####      | 2/5 [00:05<00:05,  1.94s/it, loss=1.8, v_num=0]Epoch 8:  40%|####      | 2/5 [00:05<00:05,  1.94s/it, loss=1.8, v_num=0]Epoch 8:  60%|######    | 3/5 [00:08<00:04,  2.13s/it, loss=1.8, v_num=0]Epoch 8:  80%|########  | 4/5 [00:08<00:01,  1.70s/it, loss=1.8, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7434, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.39it/s][Aval loss inside the lightning tensor(1.7955, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.38it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 8 current val mean dice: 0.0000 current val loss 3.539
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 8: 100%|##########| 5/5 [00:09<00:00,  1.66s/it, loss=1.8, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 8:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.8, v_num=0]        Epoch 9:   0%|          | 0/5 [00:00<?, ?it/s, loss=1.8, v_num=0]Epoch 9:  20%|##        | 1/5 [00:03<00:06,  1.54s/it, loss=1.79, v_num=0]Epoch 9:  40%|####      | 2/5 [00:05<00:05,  1.93s/it, loss=1.79, v_num=0]Epoch 9:  40%|####      | 2/5 [00:05<00:05,  1.93s/it, loss=1.79, v_num=0]Epoch 9:  60%|######    | 3/5 [00:08<00:04,  2.12s/it, loss=1.79, v_num=0]Epoch 9:  80%|########  | 4/5 [00:08<00:01,  1.70s/it, loss=1.79, v_num=0]
+Validating: 0it [00:00, ?it/s][A
+Validating:   0%|          | 0/2 [00:00<?, ?it/s][Aval loss inside the lightning tensor(1.7352, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 0
+
+Validating:  50%|#####     | 1/2 [00:00<00:00,  1.40it/s][Aval loss inside the lightning tensor(1.7901, device='cuda:0')
+from validation step checking Dice tensor([[0., 0.]], device='cuda:0') 1
+
+Validating: 100%|##########| 2/2 [00:01<00:00,  1.39it/s][A
+ checking number of items in the validation set 2
+
+current epoch: 9 current val mean dice: 0.0000 current val loss 3.525
+best mean dice: 0.0000 at epoch: 0.0000
+Epoch 9: 100%|##########| 5/5 [00:09<00:00,  1.65s/it, loss=1.79, v_num=0]
+                                                         [Afrom training epoch end DICE tensor(0.)
+Epoch 9: 100%|##########| 5/5 [00:17<00:00,  2.86s/it, loss=1.79, v_num=0]
+clean the memory
+memory is clean

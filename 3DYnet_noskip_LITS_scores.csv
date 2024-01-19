@@ -1,0 +1,5 @@
+version|date|object|sn|sp|ac|pr|rc|dice|lesion_gt|lesion_found|correct_lesion|location
+version_0|2022-10-17|liver|0.933|0.996|0.993|0.856|0.933|0.89|108|60|18|D:\LITS_segmentation\RESULTS_GABRIELLA\YNet_noskip_25625664\version_0\inference
+version_0|2022-10-17|tumor|0.277|0.999|0.997|0.483|0.277|0.289|108|60|18|D:\LITS_segmentation\RESULTS_GABRIELLA\YNet_noskip_25625664\version_0\inference
+3D_UNET_newmodel|2022-12-16|liver|0.936|0.995|0.993|0.847|0.936|0.885|108|79|35|D:\LITS_segmentation\RESULTS_GABRIELLA\3D_UNET_newmodel\inference
+3D_UNET_newmodel|2022-12-16|tumor|0.405|0.999|0.998|0.386|0.405|0.384|108|79|35|D:\LITS_segmentation\RESULTS_GABRIELLA\3D_UNET_newmodel\inference

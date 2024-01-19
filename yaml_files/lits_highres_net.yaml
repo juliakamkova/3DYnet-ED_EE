@@ -19,7 +19,7 @@ lightning:
 
 
 log:
-  name: 3D_Ynet
+  name: HighResNet
   save_dir: RESULTS_GABRIELLA
 
 loss:
@@ -29,52 +29,14 @@ loss:
       softmax: true
       to_onehot_y: True
 net:
-  # gab_net.Vnet.VNet:
-  #   args: []
-  #   kwargs:
-  #     num_class: 3 
-  #     in_channels: 1
-
-  models.YNet.YNet:
+  monai.networks.nets.HighResNet:
     args: []
     kwargs:
-      n_class: 3
-      #in_channel: 1
+      spatial_dims: 3 
+      in_channels: 1
+      out_channels: 3
+      # dropout_prob: 0.5
 
-  # gab_net.AttentionUnet.AttentionUNet:
-  #   args: []
-  #   kwargs:
-  #     num_class: 3 
-  #     in_channel: 1
-
-  # gab_net.AttentionVNet.VNet:
-  #   args: []
-  #   kwargs:
-  #     num_class: 3 
-  #     in_channels: 1
-
-  # monai.networks.nets.HighResNet:
-  #   args: []
-  #   kwargs:
-  #     spatial_dims: 3 
-  #     in_channels: 1
-  #     out_channels: 3
-  #     dropout_prob: 0.5
-  # monai.networks.nets.UNETR:
-  #   args: []
-  #   kwargs:
-  #     in_channels: 1
-  #     out_channels: 3
-  #     img_size: [96, 96, 96]
-  #     feature_size: 16
-  #     hidden_size: 768
-  #     mlp_dim: 3072
-  #     num_heads: 12
-  #     pos_embed: "perceptron"
-  #     norm_name: "instance"
-  #     res_block: True
-  #     conv_block: True
-  #     dropout_rate: 0.0
 optimizer:
   torch.optim.Adam:
     args: []
@@ -153,7 +115,7 @@ train:
         mode:
         - trilinear
         - nearest
-        spatial_size: [256,256,64]
+        spatial_size: [128,128,128]
 
   - monai.transforms.RandFlipd:
       args: []
@@ -252,8 +214,7 @@ valid:
         mode:
         - trilinear
         - nearest
-        spatial_size: [256,256,64]
-       
+        spatial_size: [128,128,128]
   - monai.transforms.ToTensorD:
       args: []
       kwargs:
@@ -285,10 +246,7 @@ inference:
         - image
         mode:
         - trilinear
-        spatial_size:
-        - 512
-        - 512
-        - 128
+        spatial_size: [128,128,128]
   - monai.transforms.ScaleIntensityRanged:
       args: []
       kwargs:

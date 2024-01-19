@@ -13,11 +13,11 @@ import postprocessing
 #change
 
 def inference_save (net, inputdir, outdir, volumes, params ):
-    if torch.cuda.is_available():
-        device = torch.device('cuda')
-    else:
-        device = torch.device('cpu')
-   
+    # if torch.cuda.is_available():
+    #     device = torch.device('cuda')
+    # else:
+    device = torch.device('cuda')
+    #
     net = net.to(device)
 
     transforms = []

@@ -1,0 +1,3 @@
+version|date|object|sn|sp|ac|pr|rc|dice|lesion_gt|lesion_found|correct_lesion|location
+version_3|2022-10-17|liver|0.92|0.996|0.992|0.855|0.92|0.884|108|66|20|D:\LITS_segmentation\RESULTS_GABRIELLA\3D_Vnet_monai\version_3\Vnet_25625664
+version_3|2022-10-17|tumor|0.204|0.999|0.997|0.372|0.204|0.207|108|66|20|D:\LITS_segmentation\RESULTS_GABRIELLA\3D_Vnet_monai\version_3\Vnet_25625664

@@ -1,0 +1,1 @@
+$ for C in $(find . -name "*.nii.gz"); do echo cp $C /tmp/$(basename $C .gz)_scan.nii.gz ; done

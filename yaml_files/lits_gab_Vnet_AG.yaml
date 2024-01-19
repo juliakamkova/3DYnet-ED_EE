@@ -4,8 +4,8 @@ checkpoint:
   save_top_k: 3
   verbose: true
 data:
-  image: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\img
-  label: D:\Yuliia_data\Yuliia_data\lits\liver_cropped\seg
+  image: D:\Yuliia_data\Yuliia_data\lits\img
+  label: D:\Yuliia_data\Yuliia_data\lits\seg
   root_dir: D:\Yuliia_data\Yuliia_data\lits\
   num_class: 3
 
@@ -15,12 +15,12 @@ lightning:
   gpus: 1
   gradient_clip_val: 0
   log_every_n_steps: 1
-  max_epochs: 200 
+  max_epochs: 150
   num_sanity_val_steps: 1
 
 
 log:
-  name: patch_Vnet_AG
+  name: Vnet_AG_30_03
   save_dir: RESULTS_GABRIELLA
 
 loss:
@@ -28,13 +28,13 @@ loss:
     args: []
     kwargs:
       softmax: True
-      to_onehot_y: False
+      to_onehot_y: 3
 net:
-  # gab_net.Vnet.VNet:
-  #   args: []
-  #   kwargs:
-  #     num_class: 3 
-  #     in_channels: 1
+  models.AttentionVNet.AttVNet:
+    args: []
+    kwargs:
+      num_class: 3 
+      in_channels: 1
 
   # gab_net.SimpleUnet.unet_3D:
   #   args: []
@@ -48,11 +48,11 @@ net:
   #     num_class: 3 
   #     in_channel: 1
 
-  models.AttentionVNet.VNet:
-    args: []
-    kwargs:
-      num_class: 3
-      in_channels: 1
+  # gab_net.AttentionVNet.VNet:
+  #   args: []
+  #   kwargs:
+  #     num_class: 3 
+  #     in_channels: 1
 
   # monai.networks.nets.HighResNet:
   #   args: []
@@ -80,8 +80,8 @@ optimizer:
   torch.optim.AdamW:
     args: []
     kwargs:
-      lr: 0.001
-      weight_decay: 0.001
+      lr: 0.000001
+      weight_decay: 0.0001
 train:
   augmentation:
   - monai.transforms.LoadImaged:
@@ -124,45 +124,24 @@ train:
         b_max: 1.0
         clip: True
               
-  # - monai.transforms.CropForegroundd:
-  #     args: []
-  #     kwargs:
-  #       keys:
-  #       - image
-  #       - label
-  #       source_key: image
+  - monai.transforms.CropForegroundd:
+     args: []
+     kwargs:
+       keys:
+       - image
+       - label
+       source_key: image
 
-  # - monai.transforms.RandCropByPosNegLabeld:
-  #     args: []
-  #     kwargs:
-  #       keys: ["image", "label"]
-  #       label_key: "label"
-  #       spatial_size: [96, 96, 96]
-  #       pos: 1
-  #       neg: 1
-  #       num_samples: 4
-  #       image_key: "image"
-  #       image_threshold: 0
-  #       allow_smaller: True
-
-  - monai.transforms.RandCropByLabelClassesd:
+  - monai.transforms.ResizeD:
       args: []
       kwargs:
-        keys: ["image", "label"]
-        label_key: "label"
-        spatial_size: [96, 96, 96]
-        ratios: [1,2,3]
-        num_classes: 3
-        num_samples: 4
-        image_key: "image"
-        image_threshold: 0
-        allow_smaller: True
-
-  - monai.transforms.SpatialPadd: #ResizeWithPadOrCrop:
-      args: []
-      kwargs:
-        keys: ["image", "label"]
-        spatial_size: [96, 96, 96]
+        keys:
+        - image
+        - label
+        mode:
+        - trilinear
+        - nearest
+        spatial_size: [256,256,128]
 
   - monai.transforms.RandFlipd:
       args: []
@@ -251,6 +230,16 @@ valid:
         - image
         - label
         source_key: image
+  - monai.transforms.ResizeD:
+      args: [ ]
+      kwargs:
+        keys:
+          - image
+          - label
+        mode:
+          - trilinear
+          - nearest
+        spatial_size: [ 256,256,128 ]
        
   - monai.transforms.ToTensorD:
       args: []
