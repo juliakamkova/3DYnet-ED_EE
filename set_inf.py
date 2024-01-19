@@ -76,36 +76,4 @@ def inference_save(net, inputdir, outdir, volumes, params):
         nib.save(image, path_mask1)
         print(f'Input: {filename}  saved to: {path_mask1}')
 
-        # #trying doing in a better way
-        # roi_size = (64, 64, 32)
-        # sw_batch_size = 1
-        #
-        # input = batch['image'].unsqueeze(0).to(device)#.to(torch.float32)
-        # output = net.forward(input)
-        # val_data = val_data["image"].to(device)
-        # val_output = sliding_window_inference(
-        #     val_data, roi_size, sw_batch_size, model)
-        # # plot the slice [:, :, 80]
-        # plt.figure("check", (20, 4))
-        # plt.subplot(1, 5, 1)
-        # plt.title(f"image {i}")
-        # plt.imshow(val_data.detach().cpu()[0, 0, :, :, 80], cmap="gray")
-        # plt.subplot(1, 5, 2)
-        # plt.title(f"argmax {i}")
-        # argmax = AsDiscrete(argmax=True)(val_output)
-        # plt.imshow(argmax.detach().cpu()[0, 0, :, :, 80])
-        # plt.subplot(1, 5, 3)
-        # plt.title(f"largest {i}")
-        # largest = KeepLargestConnectedComponent(applied_labels=[1])(argmax)
-        # plt.imshow(largest.detach().cpu()[0, 0, :, :, 80])
-        # plt.subplot(1, 5, 4)
-        # plt.title(f"contour {i}")
-        # contour = LabelToContour()(largest)
-        # plt.imshow(contour.detach().cpu()[0, 0, :, :, 80])
-        # plt.subplot(1, 5, 5)
-        # plt.title(f"map image {i}")
-        # map_image = contour + val_data
-        # plt.imshow(map_image.detach().cpu()[0, 0, :, :, 80], cmap="gray")
-        # plt.show()
-
-        # end of trying
+      

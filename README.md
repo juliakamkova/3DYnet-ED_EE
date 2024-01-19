@@ -19,7 +19,7 @@ pip install -r pip_req.txt
 __2.Organize the data__  
 ├── LITS_img/       # CT volumes/     
 │   ├── train/  
-│   │   ├──001.nii.gz    
+│   │   ├──001_seg.nii.gz    
 │   ├── valid/  
 │   └── test/  
 │   └── excluded/ *here comes lits volumes without tumor class on it (could also go to test)*
@@ -27,10 +27,10 @@ __2.Organize the data__
 
 ├──LITS_seg/  #GT with __THE SAME__ names as in LITS_img folder  
 │   ├── train/  
-    │   ├──001.nii.gz   
+    │   ├──001_seg.nii.gz   
 │   ├── valid/  
 │   └── test/  
-│   └── excluded/  	#91, 89, 87, 41, 47, 38, 34, 32 
+│   └── excluded/  	#91, 89, 87, 52, 51, 50, 49, 48, 47, 41, 38, 34, 32 
 
 
 __3. Create a .yaml file__    
@@ -57,4 +57,5 @@ __4. Run *main_augm_stable.py*__
     
     could also specify where to save with --save_dir
 ```
+>> In the training set:0-100. In the valid set: 32,34,38,41,87,89,91,101-120. The rest in the test set.
 
