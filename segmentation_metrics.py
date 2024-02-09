@@ -1,80 +1,65 @@
-from medpy import metric
-from surface import Surface
-import nibabel as nb
+import glob
+import os
 import numpy as np
-from pathlib import Path
-import csv
+import pymia.evaluation.metric as metric
+import pymia.evaluation.evaluator as eval_
+import pymia.evaluation.writer as writer
+import SimpleITK as sitk
+import pandas as pd
 
-def get_scores(pred,label,vxlspacing):
-	volscores = {}
+data_dir = '/home/gabi/Documents/PaperwithYuliia/inference/seg-test-gt/' # Update this path to the folder containing ground truth files
+prediction_dir = '/home/gabi/Documents/PaperwithYuliia/inference/inference_3DYNetAG-ED'  # Update this path to the folder containing prediction files
 
-	volscores['dice'] = metric.dc(pred,label)
-	volscores['jaccard'] = metric.binary.jc(pred,label)
-	volscores['voe'] = 1. - volscores['jaccard']
-	volscores['rvd'] = metric.ravd(label,pred)
+# Create the result directory if it doesn't exist
+result_dir = '/home/gabi/Documents/PaperwithYuliia/inference_results/'
+os.makedirs(result_dir, exist_ok=True)
 
-	# if np.count_nonzero(pred) ==0 or np.count_nonzero(label)==0:
-	# 	volscores['assd'] = 0
-	# 	volscores['msd'] = 0
-	# else:
-	# 	evalsurf = Surface(pred,label, physical_voxel_spacing = vxlspacing, mask_offset = [0.,0.,0.], reference_offset = [0.,0.,0.])
-	# 	volscores['assd'] = evalsurf.get_average_symmetric_surface_distance()
-    #
-	# 	volscores['msd'] = metric.hd(label,pred,voxelspacing=vxlspacing)
+metrics = [metric.DiceCoefficient(), metric.JaccardCoefficient(), metric.AverageDistance(), metric.HausdorffDistance(percentile=95, metric='HDRFDST95'), metric.VolumeSimilarity()]
 
-	return volscores
+labels = {1: 'LIVER',
+          2: 'LESION'
+          }
 
+evaluator = eval_.SegmentationEvaluator(metrics, labels)
 
-label_path = Path('D:\\Yuliia_data\\Yuliia_data\\lits\\seg\\TEST')
-prob_path = Path('D:\\LITS_segmentation\\RESULTS_GABRIELLA\\3D_Ynet\\256_256_64\\inference')
+# Get all subject files based on the extension '.nii.gz' in the ground truth directory
+subject_files = sorted(glob.glob(os.path.join(data_dir, '*.nii.gz')))
 
+for subject_file in subject_files:
+    # Correctly extract subject ID from file name, handling .nii.gz extension
+    subject_id = os.path.basename(subject_file)  # Get the filename with extension
+    if subject_id.endswith('.nii.gz'):  # Check if it ends with .nii.gz
+        subject_id = subject_id[:-7]  # Remove the .nii.gz extension to get the subject_id
 
-results = []
-outpath = 'D:\\LITS_segmentation\\RESULTS_GABRIELLA\\3D_Ynet.csv'
+    print(f'Evaluating Subject {subject_id}...')
 
-out_path = Path(outpath)
+    # Load ground truth image
+    ground_truth = sitk.ReadImage(subject_file)
 
-if out_path.exists()==False:
-    with open(out_path, 'w', newline='') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter='|')
-        spamwriter.writerow(['case', 'dice liver', 'jaccard liver', 'voe liver', 'rvd liver', 'case', 'dice lesion', 'jaccard lesion', 'voe lesion', 'rvd lesion'])
+    # Construct the prediction file path using the subject ID with the correct extension
+    prediction_file = os.path.join(prediction_dir, f'{subject_id}.nii.gz')  # Assuming prediction files also use .nii.gz
 
-print('checking code')
+    if os.path.exists(prediction_file):
+        prediction = sitk.ReadImage(prediction_file)
 
-for case in prob_path.iterdir():
-    print('checking code 2')
-    case1 = case.name
-    loaded_label = nb.load(label_path/case1)
-    loaded_prob = nb.load(prob_path/case1)
+        # Evaluate the prediction against the ground truth
+        evaluator.evaluate(prediction, ground_truth, f'Subject_{subject_id}')
+    else:
+        print(f'Prediction file for Subject {subject_id} not found at path: {prediction_file}')
 
-    liver_scores = get_scores(loaded_prob.get_data() >= 1, loaded_label.get_data() >= 1,
-                              loaded_label.header.get_zooms()[:3])
-    lesion_scores = get_scores(loaded_prob.get_data() == 2, loaded_label.get_data() == 2,
-                               loaded_label.header.get_zooms()[:3])
-    print("Liver dice", liver_scores['dice'], "Lesion dice", lesion_scores['dice'])
+# Write results to CSV files
+result_file = os.path.join(result_dir, 'results_3DYNetAG-ED.csv') # Update this path to the result file
+result_summary_file = os.path.join(result_dir, 'results_summary_3DYNetAG-ED.csv') # Update this path to the result summary file
 
-    results.append([case1, liver_scores, lesion_scores])
+# Directly pass the file path to CSVWriter without manually opening the file
+writer.CSVWriter(result_file).write(evaluator.results)
 
-    # create line for csv file
-    outstr = str(case1) + ','
-    print('checking outstr', outstr)
-    for l in [liver_scores, lesion_scores]:
-        for k, v in l.items():
-            outstr += str(v) + ','
-            outstr += '\n'
+# Directly pass the file path to CSVStatisticsWriter without manually opening the file
+functions = {'MEAN': np.mean, 'STD': np.std}
+writer.CSVStatisticsWriter(result_summary_file, functions=functions).write(evaluator.results)
 
-    # # create header for csv file if necessary
-    # if not os.path.isfile(outpath):
-    #     headerstr = 'Volume,'
-    #     for k, v in liver_scores.iteritems():
-    #         headerstr += 'Liver_' + k + ','
-    #     for k, v in liver_scores.iteritems():
-    #         headerstr += 'Lesion_' + k + ','
-    #     headerstr += '\n'
-    #     outstr = headerstr + outstr
+print('Evaluations completed.')
 
-    # write to file
-    print('checking where are we writing metrics', outpath)
-    f = open(outpath, 'a+')
-    f.write(outstr)
-    f.close()
+# Read the CSV files if needed
+results_df = pd.read_csv(result_file, sep=';')
+results_summary_df = pd.read_csv(result_summary_file, sep=';')
