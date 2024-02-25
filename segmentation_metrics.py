@@ -7,14 +7,14 @@ import pymia.evaluation.writer as writer
 import SimpleITK as sitk
 import pandas as pd
 
-data_dir = '/home/gabi/Documents/PaperwithYuliia/inference/seg-test-gt/' # Update this path to the folder containing ground truth files
-prediction_dir = '/home/gabi/Documents/PaperwithYuliia/inference/inference_3DYNetAG-ED'  # Update this path to the folder containing prediction files
+data_dir = '/path/to/folder' # Update this path to the folder containing ground truth files
+prediction_dir = 'path/to/folder'  # Update this path to the folder containing prediction files
 
 # Create the result directory if it doesn't exist
-result_dir = '/home/gabi/Documents/PaperwithYuliia/inference_results/'
+result_dir = '/home/gabdal/LITS_segmentation/inference_results/'
 os.makedirs(result_dir, exist_ok=True)
 
-metrics = [metric.DiceCoefficient(), metric.JaccardCoefficient(), metric.AverageDistance(), metric.HausdorffDistance(percentile=95, metric='HDRFDST95'), metric.VolumeSimilarity()]
+metrics = [metric.AverageDistance(), metric.VolumeSimilarity(), metric.get_classical_metrics()[0], metric.get_classical_metrics()[1], metric.get_classical_metrics()[2], metric.DiceCoefficient()]
 
 labels = {1: 'LIVER',
           2: 'LESION'
@@ -48,8 +48,8 @@ for subject_file in subject_files:
         print(f'Prediction file for Subject {subject_id} not found at path: {prediction_file}')
 
 # Write results to CSV files
-result_file = os.path.join(result_dir, 'results_3DYNetAG-ED.csv') # Update this path to the result file
-result_summary_file = os.path.join(result_dir, 'results_summary_3DYNetAG-ED.csv') # Update this path to the result summary file
+result_file = os.path.join(result_dir, 'results_ResYNet-ED_IRCADB.csv') # Update this path to the result file
+result_summary_file = os.path.join(result_dir, 'results_ResYNet-ED_IRCADB_summary_new.csv') # Update this path to the result summary file
 
 # Directly pass the file path to CSVWriter without manually opening the file
 writer.CSVWriter(result_file).write(evaluator.results)
